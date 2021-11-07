@@ -27,41 +27,41 @@
 
 *interface*
 
-- **Composition** — Interface Resources with associated properties [Interface Resource Properties]
+- **Themelet** — Interface Resources with associated properties [Interface Resource Properties]
   - **Interface Resource** — an interface-related file intended to be processed or exposed through HTTP
     - **Template** — code interpreted by a template engine
       - **PHP Template** — a MyBB 1.8-style Template interpreted using `eval()` statements
       - **Twig Template** — a MyBB 1.9-style Template interpreted by Twig
     - **Front-end Asset** — content and files intended to be exposed though HTTP
   - **Interface Resource Property** — data associated with an Interface Resource (e.g. pages to which a stylesheet is attached)
-- **Interface Resource Properties File** — a `resources.json` file in JSON format, located directly in a Composition Directory
-- **Composition Directory** — a directory containing Interface Resources separated into subdirectories named according to their type (e.g. `templates/`, `css/`, `js/`, etc.), and the Interface Resource Properties File
+- **Interface Resource Properties File** — a `resources.json` file in JSON format, located directly in a Themelet Directory
+- **Themelet Directory** — a directory containing Interface Resources separated into subdirectories named according to their type (e.g. `templates/`, `css/`, `js/`, etc.), and the Interface Resource Properties File
 
 *themes*
 
 - **Theme Property** — data associated with a Theme (e.g. color presets)
 - **Theme Properties File** — a `properties.json` file in JSON format containing Theme Properties, located directly in a Theme Definition Directory
-- **Theme Definition** — a Composition associated with a Theme and Theme Properties
+- **Theme Definition** — a Themelet associated with a Theme, and Theme Properties
 - **Theme Definition Directory** — a directory containing a Theme Definition, associated with a Theme and its version
 
 *theme system*
 
-- **Composition Inheritance Chain** — an ordered list of Extensions, according to which a final Composition is resolved, where priority is defined by the number of steps away from the end of the chain
-- **Composition Inheritance Base** — Composition of the Core Theme and Plugin Compositions of active Plugins
-- **Resolved Composition** — Composition collected or composed according to a Theme's inheritance chain
-- **Compiled Composition** — Resolved Composition prepared for output or final interpretation (e.g. Twig templates converted to PHP code) and web-accessible static files
+- **Themelet Inheritance Chain** — an ordered list of Extensions, according to which a final Themelet is resolved, where priority is defined by the number of steps away from the end of the chain
+- **Themelet Inheritance Base** — Themelet of the Core Theme and Plugin Themelets of active Plugins
+- **Resolved Themelet** — Themelet collected or composed according to a defined Themelet Inheritance Chain
+- **Compiled Themelet** — Resolved Themelet prepared for output or final interpretation (e.g. Twig templates converted to PHP code) and web-accessible static files
 
 *macros*
 
-- **Interface Macro** — a set of changes to a Composition that can be stored, applied, and reversed
-  - **Static Interface Macro** — an Interface Macro that operates on a Composition and causes it to be stored in modified state
-  - **Dynamic Interface Macro** — an Interface Macro that operates on a Resolved Composition and causes Compiled Composition to be stored in modified state
+- **Interface Macro** — a set of changes to a Themelet that can be stored, applied, and reversed
+  - **Static Interface Macro** — an Interface Macro that operates on a Themelet and causes it to be stored in modified state
+  - **Dynamic Interface Macro** — an Interface Macro that operates on a Resolved Themelet and causes a Compiled Themelet to be stored in modified state
 
 *plugin interface*
 
 - **Plugin Interface Definition** — interface-related data supplied by a Plugin
-  - **Plugin Composition** — a Composition, supplied by a Plugin, that doesn't exist in the Core Theme
+  - **Plugin Themelet** — a Themelet, supplied by a Plugin, that doesn't exist in the Core Theme
   - **Plugin Interface Macro** — an Interface Macro supplied by a Plugin
-- **Plugin Interface Macro Directory** — an innermost directory in the `[extension codename]/[extension version]/` structure associated with a specific Extension and its version located in a Plugin Interface Definition Directory, containing a Plugin Interface Macro File
+- **Plugin Interface Macro Directory** — an innermost directory in the `<extension codename>/<extension version>/` structure associated with a specific Extension and its version located in a Plugin Interface Definition Directory, containing a Plugin Interface Macro File
 - **Plugin Interface Macro File** — an `extend.php` file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory
-- **Plugin Interface Definition Directory** — an `interface/` directory located directly in a Plugin's Extension Directory, additionally containing a `macros/` subdirectory with Plugin Interface Macro Directories
+- **Plugin Interface Definition Directory** — an innermost directory in the `interface/<plugin version>` structure located directly in a Plugin's Extension Directory, associated with a Plugin's version, additionally containing a `macros/` subdirectory with Plugin Interface Macro Directories
