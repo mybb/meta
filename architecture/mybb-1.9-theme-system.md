@@ -102,12 +102,12 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - manual changes have to be re-applied, and
   - manual changes have to be reviewed (to resolve potential conflicts).
   
-  Experienced administrators may partially mitigate the problems by using existing inheritance features, in which case their workflow would rely on:
+  Experienced administrators may partially mitigate these problems by using existing inheritance features, in which case their workflow would rely on:
 
   - creating child themes — inheriting resources from imported themes — that contain custom edits, and
   - upgrading themes by importing their new versions, and switching child themes with custom edits to inherit from the newly imported version of their parent theme.
   
-  It is, however, still the administrators' responsibility to remember to only apply changes in child themes, and to review changes that occurred in imported themes and apply them as needed to resources overwritten by child themes.
+  It is, however, still the administrators' responsibility to remember to only apply changes in child themes, and to review changes that occur in imported themes in order to propagate them, as needed, to resources overwritten in child themes.
 
   MyBB ≤ 1.8's _Find Updated Templates_ functionality only supports reviewing changes to the _MyBB Master Style_ that need to be propagated manually, primarily because themes can only indicate compatibility with the core (referencing a MyBB version code; theme's templates are surfaced by the feature when their core version number is lower than that of the corresponding Master Style templates, and the template contents differ).
 
@@ -118,7 +118,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   The Interface Macro feature separates the status of Theme changes from the status of Plugins (installation and activation), and introduces the possibility of saving manual changes with metadata, both of which could be inspected and toggled individually for each Theme.
 
 - ### Theme Runtime Information
-  Even though Theme Resources will be offloaded to the filesystem, some references for activated Themes will be stored in the database's `themes` table. These include instance-specific information that would not be applicable when moving a theme to another MyBB installation.
+  Even though Theme Resources will be offloaded to the filesystem, some references for activated Themes will be stored in the database's `themes` table. These include instance-specific information that would not be applicable when moving a Theme to another MyBB installation.
   
   <br>
   
