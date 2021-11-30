@@ -166,7 +166,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Board Theme** | ✅ Yes | ✅ Yes | ✅ Yes (parents only) | ✅ Yes (parents only)
   
   - A **Core Theme** is the first source in the inheritance chain, and therefore doesn't inherit Resources from other sources, and cannot override any other source.
-  - A **Plugin Themelet** may only supply own Resources that are added to the inheritance chain, or add Resources to Themelets of other Plugins'.
+  - A **Plugin** may only supply own Resources that are added to the inheritance chain, or add Resources to Themelets of other Plugins.
   - An **Original Theme** may inherit and override Resources from the Core Theme, parent Original Themes, and Plugin Themelets.
   - A **Board Theme** may inherit and override Resources from Plugin Themelets and all parent Themes.
   
@@ -178,7 +178,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   --|:--:|:--:|:--:|:--:|:--:
   Theme — through inheritance | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No
   Plugin — through Inheritance | ❌ No | ❌ No | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach) | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach) | ❌ No
-  Plugin — through Function/Macro | ✅ Yes | ✅ Yes | ❌ No | ❌ No / ✅ Yes (depending on chosen approach) | ❌ No
+  Plugin — through Function/Macro | ✅ Yes | ✅ Yes | ❌ No / ✅ Yes (depending on chosen approach) | ❌ No / ✅ Yes (depending on chosen approach) | ❌ No
 
   - **Themes**:
     - can override Resources of Plugins and parent Themes using inheritance,
@@ -196,12 +196,11 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   To facilitate this behavior, supplied Themelets will be associated with versions of Extensions they were originally included in, and stored indefinitely in the filesystem. Notably, only a Themelet — with Resources that can be interpreted by the Theme System — will be preserved, rather than the complete Extension Package.
   
-  The lifecycle of version-specific Themelets is loosely related to their status:
+  The lifecycle of version-specific Themelets is loosely related to their usage status:
   
   1. **latest** — the Themelet version is associated with the latest version of an Extension,
   2. **active** — the Themelet version is outdated, but is configured as the main Themelet for an active Extension, or is inherited from by another active Extension,
-  3. **unused** — the Themelet version is outdated and is not referenced in any inheritance chain, but may continue to be used for comparison and auditing purposes,
-  4. **purged** — the Themelet version is deleted.
+  3. **unused** — the Themelet version is outdated and is not referenced in any inheritance chain, but may continue to be used for comparison and auditing purposes.
   
   This lifetime is not expected to be continuous, as arbitrary versions can be referenced throughout the application at any time (e.g. by Extensions or through configuration in the ACP).
   
@@ -243,13 +242,13 @@ Changes that result in Theme resources being modified are defined Static Macros.
     Removed files, present in past versions, won't be incorrectly included again after uploading the new version.
   - **Importing with Static Paths** (Developer Experience)
 
-      The Extension's files can be added to the installation without changing directory names to indicate specific versions.
+      The Extension's files can be added to the installation without changing directory names to indicate specific versions beforehand.
   - **Live Editing with Static Paths** (Developer Experience)
 
       The same file paths as the ones uploaded can be used to edit and preview changes.
   - **Exporting with Static Paths** (Developer Experience)
 
-      The Extension's files can be downloaded to the same directory structure without adjusting versioned directory names.
+      The Extension's files can be downloaded and moved to the same directory structure without changing versioned directory names to static ones beforehand.
   - **Copy Synchronization** (Developer Experience)
 
     If copies of the Extension's files are made (e.g. to allow safe overwriting), changes are propagated to the copies properly.
@@ -260,10 +259,12 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   - **Passive**, in which the directories are versioned before being used by the Extension System:
     - **Manual** — the simplest approach that puts the burden of naming Themelet directories according to their version on Extension developers
-    - **On Detection** — an improved approach that allows developers to distribute packages with static directory names, which are automatically renamed according to the Extension's version
+    - **On Detection** — an improved approach that allows developers to add (and distribute) packages with static directory names, which are automatically renamed according to the Extension's version
+
   - **Active**, in which the target location with versioned Themelets is managed exclusively by the application, and Extension files are uploaded through the ACP or to a staging directory and processed by the application:
     - **Processing (Simple)** — Extension files are uploaded to the ACP or a temporary location and processed to rename directories according to the Extension's version
     - **Processing (Compatible)** — an improved approach that stores the latest Themelet version in a directory with a static name, allowing developers to access it for editing and exporting more easily
+
   - **Mixed**, in which administrators and developers can interact with the target location, but some intervention by the application is required:
     - **On Archiving** — the most recent Themelet is kept in a directory with a static name, and is renamed to `<version>/` through user action before a new version is uploaded
     - **Cold Duplicate** — Extension files are duplicated on detection to a `<version>/` directory; the static-named directory overrides content stored in `<version>/` directories as determined by the version specified in the manifest file; the files may be synchronized continuously when in development mode or on request
@@ -313,7 +314,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   which would result in:
   - potentially unexpected behavior (when a Plugin's Resources are accidentally overridden by a Theme, given that Themes always override Resources from the inheritance base), and/or
-  - undefined behavior (when a Plugin's Resources are accidentally overridden by another Plugin, given that Plugins don't have any explicit hierarchy or order).
+  - undefined behavior (when a Plugin's Resources are accidentally overridden by another Plugin, given that Plugins don't have any hierarchy or explicit order).
   
   #### Separate Namespaces for Plugins
   To address this problem, Resources supplied by Plugin Themelets can be placed in — and accessed from — their own namespace, which would result in distinct and unique paths managed by the Extension System.
@@ -333,7 +334,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
   {% include '@plugin_b/common_name/template.twig' %}
   ```
   
-  Additionally, the design can help prevent Plugins from overwriting Resources in the main namespace without doing so explicitly using Interface Macros (or other Theme modification functions).
+  This design can, additionally, help prevent Plugins from overwriting Resources in the main namespace without doing so explicitly using Interface Macros (or other Theme modification functions), depending on chosen approach.
+  
+  Resource interactions (e.g. inheritance and overriding) will be handled separately inside each scope, taking into account the namespace, rather than just the Resource path (which may involve enforcing separate prefixes or directories for each scope). The namespace syntax used in the examples is [supported by Twig](https://twig.symfony.com/doc/3.x/api.html#twig-loader-filesystemloader).
   
   #### Populating Plugin Namespaces
   Contributions from Themes to a Plugin's namespace (intended to override the Plugin's original Resources) can be made possible by combining Resources placed in directories referencing the target Extension's codename with its own Themelet.
@@ -354,9 +357,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
   #### Source Priority in Plugin Namespaces
   In addition to preventing accidental collisions, namespaces allow for better control of intentional overrides (compared to combining all Resources in a single namespace in undefined order).
   
-  While Themes are expected to override Plugin Themelets (by assigning higher priority to Themes' contributions), namespaces allow for better control of external Plugins' contributions, leaving the possibility of:
+  While Themes are expected to override Plugin Themelets (by assigning higher priority to Themes' contributions), namespaces allow for better control of external Plugins' contributions, such as:
   - disallowing Plugin–Plugin contributions completely (by not recognizing external Plugins' sources),
-  - only allowing non-conflicting contributions (i.e. only new Resources) to another Plugin's namespace (by assigning higher priority to original Plugin's sources), or
+  - only allowing non-conflicting contributions (i.e. only new Resources) to another Plugin's namespace (by assigning higher priority to the target Plugin's original sources), or
   - allowing any contributions, including the overriding of original Resources, while ensuring that external overrides work correctly (by assigning higher priority to external Plugins' contributions).
   
   In the last two cases, contributions from two or more third-party Extensions to a single Plugin's namespace may result in collisions, given the lack of priority-defining hierarchy (which exists for Themes). This may be addressed by allowing Plugin developers or administrators to set explicit priority for Plugins or individual Resources, whether absolute (similar to numeric forum order) or relative (referencing conflicting, sibling extensions in "before" and "after" lists).
