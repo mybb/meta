@@ -21,9 +21,11 @@ This document presents for discussion the general design, features, and roadmap 
 The content and metadata of Resources, and most of Theme-related information, will be offloaded to the filesystem according to the principle of separating code and data:
 
 - **Extension Package** → Filesystem
+
   Source files — including Twig templates, stylesheets, and static assets — will be stored under as files with the appropriate extension. That will include Resource Properties, like pages a stylesheet is attached to, stored in JSON files. Packages will be easily transferable between MyBB installations.
 
 - **Runtime Data** → Database Tables
+
   Activated Themes will be tracked in the database table `mybb_themes`, and associated with a Package in the filesystem. These records will contain information specific to the individual forum installation, like permissions, customized title, or chosen color scheme, and will be referenced in other tables.
 
 #### Themelets
