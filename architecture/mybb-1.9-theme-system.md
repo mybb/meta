@@ -211,10 +211,13 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   Interactions with this structure affect:
   - **System Complexity**
+
     A logical directory structure is preferred to simplify the implementation and related code (e.g. querying data using normalized paths), and to minimize cognitive load.
   - **User Experience and Data Integrity**
+
     Common operations, like uploading or updating Extensions, should be simple and have predictable effects. The mechanism should assure that no data is overridden accidentally.
   - **Developer Experience**
+
     While Extension versions will have to be declared in manifest files and changed on subsequent releases, the potential practice of renaming directories — which may be nested deeper than the Extension Package's main directory — may be unexpected, forgotten, or lead to practical problems.
     
     A common development workflows may involve:
@@ -226,18 +229,26 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   Specifically, the following desired features can be identified:
   - **Normalized Paths** (System Complexity)
+
     The storage structure follows and illustrates the system's logical hierarchy.
   - **Overwrite Protection** (User Experience and Data Integrity)
+
     New versions of the Extension can be uploaded without overwriting past versions' data.
+
   - **Recognition of Deleted Files** (User Experience and Data Integrity)
+
     Removed files, present in past versions, won't be incorrectly included again after uploading the new version.
   - **Importing with Static Paths** (Developer Experience)
+
       The Extension's files can be added to the installation without changing directory names to indicate specific versions.
   - **Live Editing with Static Paths** (Developer Experience)
+
       The same file paths as the ones uploaded can be used to edit and preview changes.
   - **Exporting with Static Paths** (Developer Experience)
+
       The Extension's files can be downloaded to the same directory structure without adjusting versioned directory names.
   - **Copy Synchronization** (Developer Experience)
+
     If copies of the Extension's files are made (e.g. to allow safe overwriting), changes are propagated to the copies properly.
   
   <br>
@@ -327,8 +338,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
   These can be implemented as e.g.:
   
   - **Sub-directories in Special Format**
+
     Resources intended for a namespace of a particular Extension are placed in a special directory `ext-<codename>` (e.g. `templates/ext-plugin-name/`).
   - **Separate Directories for Extensions**
+
     Resources intended for a namespace of a particular Extension are placed in `extensions/<codename>/<version>/` (e.g. `extensions/plugin-name/v1/templates/`).
   
     This unifies the structure designed for Interface Macro files (`macros/<codename>/<version>/`) with Resources to be added to the Extension's namespace.
