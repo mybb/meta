@@ -45,6 +45,7 @@ Themelets are the foundation of Themes and interfaced Plugins, which can use the
 
 #### Version Data Retention
 Past versions of Themelets supplied by activated Extensions will be retained on update, enabling improved compatibility, comparison, and conflict resolution features.
+
 For example, after installing a Theme with version 1.0 and then uploading new versions 1.1 and 1.2, the templates, stylesheets, and other data for all three versions would be retained in the filesystem, and thus available for comparison — manual or automated — showing what changes need to be applied in child Themes.
 
 #### Front-End Asset Processing
@@ -69,7 +70,7 @@ Theme files will be placed in `inc/themes/<package-name>/` directories referenci
 Administrators will able activate Themes by selecting one of the Packages in the filesystem. Activated Themes will store values for supported configuration options defined in Packages (like color scheme choices).
 
 #### Update Experience Improvements
-The existing mechanism of propagating Template updates will be extended to cover other Resource types, custom Themes, and Plugins, with improved usability. The system will show a comparison upstream changes in inherited Resources that need to be copied manually, or will suggest an automatic patch.
+The existing mechanism of propagating Template updates will be extended to cover other Resource types, custom Themes, and Plugins, with improved usability. The system will show a comparison of upstream changes in inherited Resources that need to be copied manually, or will suggest an automatic patch.
 
 ### Plugins
 
@@ -90,7 +91,7 @@ The scheme will allow a more fine-grained control for interactions between Plugi
 Storing individual Macros will allow changes to be reverted even when the extension that introduced them is removed.
 
 ##### Macro Types
-Changes that result in Theme resources being modified are defined Static Macros. This feature can be extended to allow Dynamic Macros, where changes are applied just before the Resources are rendered, leaving the source Themes intact.
+Changes that result in Theme resources being modified are defined Static Macros. This feature can be extended to allow Dynamic Macros, where changes are applied just before the Resources are rendered, leaving all source Themes intact.
 
 ## Design Notes
 - ### Addressing MyBB ≤ 1.8 Theme Management Problems
