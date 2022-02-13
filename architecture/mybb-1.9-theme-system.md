@@ -281,7 +281,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Active** | Processing (Simple) | `<version>/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
   **Active** | Processing (Compatible) | static path (for latest version) or  `<version>/` (for older versions) | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Yes; different location | n/a | ⚠️ Yes; different location 
   **Mixed** | On Archiving | static path (for latest version) or  `<version>/` (for older versions) | ⚠️ Yes; action required | ✅ Yes | ✅ Yes | ✅ Yes | n/a | ✅ Yes 
-  **Mixed** | Cold Duplicate | static path (priority) or `<version>/` | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ⚠️ Yes; action required| ✅ Yes 
+  **Mixed** | **Cold Duplicate** | static path (priority) or `<version>/` | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ⚠️ Yes; action required| ✅ Yes 
   **Mixed** | Hot Duplicate | `<version>/` | ⚠️ Yes; action required | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes 
   
   <br>
@@ -349,7 +349,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - **Separate Directories for Extensions**
 
     Resources intended for a namespace of a particular Extension are placed in `interface/extensions/<codename>/` (e.g. `interface/extensions/plugin-name/templates/`).
-  - **Namespace-First Directories**
+  - **Namespace-First Directories** (preferred)
 
     Resources for both own and foreign namespaces are placed in `interface/<namespace>/` (`interface/ext/templates/`, `interface/ext-plugin-name/templates/`).
 
@@ -411,31 +411,31 @@ Changes that result in Theme resources being modified are defined Static Macros.
   The following storage choices were considered for each logical group in the hierarchy of Resources:
   
   1. Extension Type
-     - A. Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
+     - **A.** Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
      - B. Themelets stored in the same directory (e.g. `inc/themes/`, splitting the Extension's Themelet from other files)
   1. Extension's Target Interface Type/Namespace
      - A. Extension Directories spread across the filesystem according to type (e.g. `inc/themes/`, `admin/themes/`)
-     - B. Extension Directories stored in subdirectories according to type (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
+     - **B.** Extension Directories stored in subdirectories according to type/namespace (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
      - C. Extension Directories stored in the same directory for all types (e.g. `inc/themes/`)
   1. Extension Package
-     - A. Extensions stored in directories referencing the package name (`<package-name>/`)
+     - **A.** Extensions stored in directories referencing the package name (`<package-name>/`)
   1. Themelet Path
      - A. Themelets stored in `interface/` subdirectories of Extension Directories
-     - B. Themelets of Plugins stored in `interface/` subdirectories of Extension Directories, and Themelets of Themes directly in Extension Directories
+     - **B.** Themelets of Plugins stored in `interface/` subdirectories of Extension Directories, and Themelets of Themes directly in Extension Directories
      - C. Themelets of all Extensions stored directly in Extension Directories
   1. Latest Themelet Version (depending on chosen approach)
      - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `interface/current/`)
-     - B. latest Themelets stored directly in Extension Themelet Paths (e.g. `interface/`)
+     - **B.** latest Themelets stored directly in Extension Themelet Paths (e.g. `interface/`)
   1. Old Themelet Versions (depending on chosen approach)
-     - A. old Themelets stored in an external structure (e.g. `inc/themelets/<package-name>/<version>/`)
+     - **A.** old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/<version>/`)
      - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `interface/<version>/`)
   1. Destination Namespace (depending on chosen approach)
-     - A. all Themelets stored in directories named according to type or namespace (e.g. `interface/base/` for main resources, and `interface/<namespace>/` for specific namespaces)
+     - **A.** all Themelets stored in directories named according to type or namespace (e.g. `interface/base/` for main resources, and `interface/<namespace>/` for specific namespaces)
      - B. namespace-specific Themelets stored in a directory for non-main namespaces (e.g. `interface/extensions/<namespace>/`)
      - C. namespace-specific Themelets stored in main Themelet directories (e.g. `interface/ext-<namespace>/`)
      - D. namespace-specific Themelets merged with main Themelets (e.g. `interface/<resource-type>/ext-<namespace>/`
   1. Third-Party Extension Version (depending on chosen approach)
-     - A. version-specific Themelets stored in directories referencing the target Extension version (`<extension-version>/`)
+     - **A.** version-specific Themelets stored in directories referencing the target Extension version (`<extension-version>/`)
   
 - ### JSON Data Files
   - #### `manifest.json`
