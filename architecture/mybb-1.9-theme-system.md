@@ -348,10 +348,13 @@ Changes that result in Theme resources being modified are defined Static Macros.
     Resources intended for a namespace of a particular Extension are placed in a special directory `ext-<codename>` (e.g. `interface/templates/ext-plugin-name/`).
   - **Separate Directories for Extensions**
 
-    Resources intended for a namespace of a particular Extension are placed in `extensions/<codename>/<version>/` (e.g. `extensions/plugin-name/v1/templates/`).
-  
-    This unifies the structure designed for Interface Macro files (`macros/<codename>/<version>/`) with Resources to be added to the Extension's namespace.
-  
+    Resources intended for a namespace of a particular Extension are placed in `interface/extensions/<codename>/` (e.g. `interface/extensions/plugin-name/templates/`).
+  - **Namespace-First Directories**
+
+    Resources for both own and foreign namespaces are placed in `interface/<namespace>/` (`interface/ext/templates/`, `interface/ext-plugin-name/templates/`).
+
+    Themelets in `ext/` directories are placed in the supplying plugin's namespace automatically, without the need of appending the extension's codename to it.
+
   If desired, Plugins may be similarly permitted to contribute to other Plugins' namespaces.
   
   #### Source Priority in Plugin Namespaces
@@ -473,7 +476,13 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - system (using reserved static names, e.g. `core` or `core.default`)
     - instance-limited packages (using reserved, codename-incompatible format, referencing an internal ID, e.g. `theme.<id>` for Board Themes)
     - distributable packages (using the codename format enforced by the Extend platform: `[a-z_]+`)
+  - **Themelet Bundle Directories**
     
+    Themelets supplied by Extensions (Themelet Bundles) are separated into directories indicating their target namespaces using the following formats:
+    - normal namespaces `<name>/`
+    - Extension namespaces
+      - explicit `ext-<codename>/`
+      - implicit `ext/` (resolved to the supplying Plugin's namespace)
   - **Resource Directories**
 
     Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
@@ -667,10 +676,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
 *theme system*
 
 - **Themelet** — Interface Resources with associated properties [Interface Resource Properties]
-  - - **Self-contained Themelet** — a Themelet with only custom Interface Resources
-    - **Multi-namespace Themelet** — a Themelet with Interface Resources that may be custom, or override those of selected Extensions
-  - **Direct Themelet** — a collection of a Themelet's Resources and associated Properties whose target namespace is managed by the system
-  - **Namespace Themelet** — a collection of Themelet's Resources and associated Properties whose target namespace is defined explicitly
+  - - **Direct Themelet** — a collection of a Themelet's Resources and associated Properties whose target namespace is managed by the system
+    - **Namespace Themelet** — a collection of a Themelet's Resources and associated Properties whose target namespace is defined explicitly
+- **Themelet Bundle** — a collection of Themelets intended for multiple distinct namespaces, supplied by a single Extension
 - **Interface Resource Properties File** — a `resources.json` file in JSON format, located directly in a Themelet Directory
 - **Themelet Directory** — a directory containing Interface Resources separated into subdirectories named according to their type (e.g. `templates/`, `css/`, `js/`, etc.), and the Interface Resource Properties File
 - **Themelet Inheritance Chain** — an ordered list of Extensions, according to which a final Themelet is resolved, where priority is defined by the number of steps away from the end of the chain
