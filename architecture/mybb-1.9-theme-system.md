@@ -345,7 +345,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   - **Sub-directories in Special Format**
 
-    Resources intended for a namespace of a particular Extension are placed in a special directory `ext-<codename>` (e.g. `templates/ext-plugin-name/`).
+    Resources intended for a namespace of a particular Extension are placed in a special directory `ext-<codename>` (e.g. `interface/templates/ext-plugin-name/`).
   - **Separate Directories for Extensions**
 
     Resources intended for a namespace of a particular Extension are placed in `extensions/<codename>/<version>/` (e.g. `extensions/plugin-name/v1/templates/`).
@@ -698,7 +698,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - **Plugin Interface Macro** — an Interface Macro supplied by a Plugin
 - **Plugin Interface Macro Directory** — an innermost directory in the `<extension codename>/<extension version>/` structure associated with a specific Extension and its version located in a Plugin Interface Definition Directory, containing a Plugin Interface Macro File
 - **Plugin Interface Macro File** — an `extend.php` file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory
-- **Plugin Interface Definition Directory** — an innermost directory in the `interface/<plugin version>` structure located directly in a Plugin's Extension Directory, associated with a Plugin's version, additionally containing a `macros/` subdirectory with Plugin Interface Macro Directories
+- **Plugin Interface Definition Directory** — an innermost directory in the `interface/<plugin version>/` structure located directly in a Plugin's Extension Directory, associated with a Plugin's version, additionally containing a `macros/` subdirectory with Plugin Interface Macro Directories
 
 ## References
 - GitHub issue #3689 [1.9 Theme System](https://github.com/mybb/mybb/issues/3689)
