@@ -29,14 +29,17 @@ The content and metadata of Resources, and most of Theme-related information, wi
   Activated Themes will be tracked in the database table `mybb_themes`, and associated with a Package in the filesystem. These records will contain information specific to the individual forum installation, like permissions, customized title, or chosen color scheme, and will be referenced in other tables.
 
 #### Themelets
-Features related to Themes have a significant overlap with Plugins, which can supply their own templates or stylesheets. The new system introduces a logical structure — common to both types — grouping Resources introduced by a single Extension, together with their metadata, while allowing them to reside in the source Package's directory:
+Features related to Themes have a significant overlap with Plugins, which can supply their own templates or stylesheets. The new system introduces a logical structure — common to both types — grouping Resources introduced by a single Extension by namespace and type, together with their metadata:
 
 ```
-images/
-scripts/
-styles/
-templates/
-resources.json
+frontend/
+    images/
+    scripts/
+    styles/
+    templates/
+    resources.json
+acp/
+    ...
 ```
 
 The Extension System will process Resources contained in each active Extension's directory according to desired inheritance.
@@ -48,7 +51,7 @@ Past versions of Themelets supplied by activated Extensions will be retained on 
 
 For example, after installing a Theme with version 1.0 and then uploading new versions 1.1 and 1.2, the templates, stylesheets, and other data for all three versions would be retained in the filesystem, and thus available for comparison — manual or automated — showing what changes need to be applied in child Themes.
 
-#### Front-End Asset Processing
+#### Asset Processing
 The system will support the SCSS format to compile browser-ready stylesheet files, and extend resource management features to support JavaScript files.
 
 #### Partial Backward Compatibility with MyBB ≤ 1.8 Plugins
@@ -75,9 +78,11 @@ The existing mechanism of propagating Template updates will be extended to cover
 ### Plugins
 
 #### Plugin Interfaces
-Plugins will use the universal Themelet structure under `interface/` to supply own Interface Resources. This structure will additionally contain modification instructions for individual Themes, and a `manifest.json` file.
+Plugins will use the universal Themelet structure under `interface/` to supply own Interface Resources, and contain modification instructions for individual Themes.
 
 Custom Resources will be added at the beginning of the inheritance chain, meaning that Themes will be able to override them to adjust Plugins visually.
+
+Similar to Themes, the system will use `manifest.json` files for metadata.
 
 #### Interface Macros
 The Extension System will expose a Theme modification API, and accept modification instructions known as *Macros*. These instructions will be handled by the System to apply, revert, and track theme changes requested by individual plugins.
@@ -209,12 +214,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
 - ### Versioned Themelet Storage
   Given that Themelets are subsets of Extension Package files, and all versions — including the most recent ones — are expected to have nearly equal status (as any version can be referenced throughout the application at any time), their storage structure would be similar to:
   
-  _Extensions directory_ (`inc/plugins/`, `inc/themes/`) ← _Package_ (e.g. `<codename>/`) ← _Package Themelets_ (e.g. `interface/`) ← _Themelet_ (e.g. `<version>/`)
+  _Extensions directory_ (`inc/plugins/`, `inc/themes/`) ← _Package_ (e.g. `{codename}/`) ← _Package Themelets_ (e.g. `interface/`) ← _Themelet_ (e.g. `{version}/`)
 
-  Interactions with this structure affect:
-  - **System Complexity**
-
-    A logical directory structure is preferred to simplify the implementation and related code (e.g. querying data using normalized paths), and to minimize cognitive load.
+  Interactions with this structure affect, in order of importance:
   - **User Experience and Data Integrity**
 
     Common operations, like uploading or updating Extensions, should be simple and have predictable effects. The mechanism should assure that no data is overridden accidentally.
@@ -226,32 +228,34 @@ Changes that result in Theme resources being modified are defined Static Macros.
     1. copying the Extension's files into a MyBB installation (e.g. from a code repository),
     2. editing the Extension's source code and observing the effects,
     3. comparing and copying files from the MyBB installation back into the source (e.g. a code repository)
+  - **System Complexity**
+
+    A logical directory structure is preferred to simplify the implementation and related code (e.g. querying data using normalized paths), and to minimize cognitive load.
   
     in which case static directory names would be preferred to preserve code history and allow quick comparison.
 
-  Specifically, the following desired features can be identified:
-  - **Normalized Paths** (System Complexity)
-
-    The storage structure follows and illustrates the system's logical hierarchy.
-  - **Overwrite Protection** (User Experience and Data Integrity)
+  Specifically, the following desired features can be identified, in order of importance:
+  - **Overwrite Protection** (User Experience and Data Integrity — high importance)
 
     New versions of the Extension can be uploaded without overwriting past versions' data.
-
-  - **Recognition of Deleted Files** (User Experience and Data Integrity)
-
-    Removed files, present in past versions, won't be incorrectly included again after uploading the new version.
-  - **Importing with Static Paths** (Developer Experience)
-
-      The Extension's files can be added to the installation without changing directory names to indicate specific versions beforehand.
   - **Live Editing with Static Paths** (Developer Experience)
 
-      The same file paths as the ones uploaded can be used to edit and preview changes.
+    The same file paths as the ones uploaded can be used to edit and preview changes.
+  - **Importing with Static Paths** (Developer Experience)
+
+    The Extension's files can be added to the installation without changing directory names to indicate specific versions beforehand.
   - **Exporting with Static Paths** (Developer Experience)
 
-      The Extension's files can be downloaded and moved to the same directory structure without changing versioned directory names to static ones beforehand.
+    The Extension's files can be downloaded and moved to the same directory structure without changing versioned directory names to static ones beforehand.
   - **Copy Synchronization** (Developer Experience)
 
     If copies of the Extension's files are made (e.g. to allow safe overwriting), changes are propagated to the copies properly.
+  - **Normalized Paths** (System Complexity)
+
+    The storage structure follows and illustrates the system's logical hierarchy.
+  - **Recognition of Deleted Files** (User Experience and Data Integrity — low importance)
+
+    Removed files, present in past versions, won't be incorrectly included again after uploading the new version.
   
   <br>
   
@@ -259,16 +263,16 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   - **Passive**, in which the directories are versioned before being used by the Extension System:
     - **Manual** — the simplest approach that puts the burden of naming Themelet directories according to their version on Extension developers
-    - **On Detection** — an improved approach that allows developers to add (and distribute) packages with static directory names, which are automatically renamed according to the Extension's version
+    - **On Detection** — an improved approach that allows developers to add (and distribute) Packages with static directory names, which are automatically renamed according to the Extension's version
 
   - **Active**, in which the target location with versioned Themelets is managed exclusively by the application, and Extension files are uploaded through the ACP or to a staging directory and processed by the application:
     - **Processing (Simple)** — Extension files are uploaded to the ACP or a temporary location and processed to rename directories according to the Extension's version
     - **Processing (Compatible)** — an improved approach that stores the latest Themelet version in a directory with a static name, allowing developers to access it for editing and exporting more easily
 
   - **Mixed**, in which administrators and developers can interact with the target location, but some intervention by the application is required:
-    - **On Archiving** — the most recent Themelet is kept in a directory with a static name, and is renamed to `<version>/` through user action before a new version is uploaded
-    - **Cold Duplicate** — Extension files are duplicated on detection to a `<version>/` directory; the static-named directory overrides content stored in `<version>/` directories as determined by the version specified in the manifest file; the files may be synchronized continuously when in development mode or on request
-    - **Hot Duplicate** — an improved approach, where Extension files from the static-named directory are synchronized to the `<version>/` copy, where data is accessed from; may be I/O-intensive, and would require user action to break synchronization before uploading new versions
+    - **On Archiving** — the most recent Themelet is kept in a directory with a static name, and is renamed to `{version}/` through user action before a new version is uploaded
+    - **Cold Duplicate** — Extension files are duplicated on detection to a `{version}/` directory; the static-named directory overrides content stored in `{version}/` directories as determined by the version specified in the manifest file; the files may be synchronized continuously when in development mode or on request
+    - **Hot Duplicate** — an improved approach, where Extension files from the static-named directory are synchronized to the `{version}/` copy, where data is accessed from; may be I/O-intensive, and would require user action to break synchronization before uploading new versions
   
   <br>
   
@@ -276,20 +280,30 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   Type | Versioning Method | Runtime Source Directory | Overwrite Protection | Recognition of Deleted Files | Importing with Static Paths | Live Editing with Static Paths | Copy Synchronization | Exporting with Static Paths 
   --|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:
-  **Passive** | Manual | `<version>/` | ✅ Yes | ✅ Yes | ❌ No | ❌ No | n/a | ❌ No 
-  **Passive** | On Detection | `<version>/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
-  **Active** | Processing (Simple) | `<version>/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
-  **Active** | Processing (Compatible) | static path (for latest version) or  `<version>/` (for older versions) | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Yes; different location | n/a | ⚠️ Yes; different location 
-  **Mixed** | On Archiving | static path (for latest version) or  `<version>/` (for older versions) | ⚠️ Yes; action required | ✅ Yes | ✅ Yes | ✅ Yes | n/a | ✅ Yes 
-  **Mixed** | **Cold Duplicate** | static path (priority) or `<version>/` | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ⚠️ Yes; action required| ✅ Yes 
-  **Mixed** | Hot Duplicate | `<version>/` | ⚠️ Yes; action required | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes 
+  **Passive** | Manual | `{version}/` | ✅ Yes | ✅ Yes | ❌ No | ❌ No | n/a | ❌ No 
+  **Passive** | On Detection | `{version}/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
+  **Active** | Processing (Simple) | `{version}/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
+  **Active** | Processing (Compatible) | static path (for latest version) or  `{version}/` (for older versions) | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Yes; different location | n/a | ⚠️ Yes; different location 
+  **Mixed** | On Archiving | static path (for latest version) or  `{version}/` (for older versions) | ⚠️ Yes; action required | ✅ Yes | ✅ Yes | ✅ Yes | n/a | ✅ Yes 
+  **Mixed** | **Cold Duplicate** | static path (priority) or `{version}/` | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ⚠️ Yes; action required| ✅ Yes 
+  **Mixed** | Hot Duplicate | `{version}/` | ⚠️ Yes; action required | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes 
+  
+  The _Cold Duplicate_ method was selected on the basis of desired features and feasibility.
+
+  Directories with old Themelets (`{version}/`) may be stored in a separate path for practical reasons (see: [Directory Structure](#directory-structure)).
+  
+  Resources supplied by a single Package may thus be stored in multiple locations:
+  - source — directories that extension developers are expected to interact with (existing in MyBB ≤ 1.8),
+  - Theme System archive — directories with copies of source files managed by the Extension System (new),
+  - web cache — directories with processed resources saved for performance reasons, or available through HTTP (existing in MyBB ≤ 1.8).
   
   <br>
   
 - ### Resource Namespaces
-  Resources from Themes and Plugins are saved and accessed using a single namespace, i.e. without any logical separation, which may lead to overlapping Resource paths.
+  #### Problem
+  Saving and accessing Resources from Themes and Plugins using a single namespace (i.e. without any logical separation) may lead to overlapping Resource paths.
   
-  This results in Extensions "polluting" the general-use namespace, which may lead to accidental collisions of Resource paths (Theme–Plugin, Plugin–Plugin), e.g. when using common names in template groups. Even when Plugins follow best practices to contain own Resources within unique paths using codenames (e.g. `templates/<codename>/`), Theme–Plugin conflicts may occur when valid Extension codenames use common words that may be used in Themes' Resource paths.
+  This results in Extensions "polluting" the general-use namespace, which may lead to accidental collisions of Resource paths (Theme–Plugin, Plugin–Plugin), e.g. when using common names in template groups. Even when Plugins follow best practices to contain own Resources within unique paths using codenames (e.g. `templates/{codename}/`), Theme–Plugin conflicts may occur when valid Extension codenames use common words that may be used in Themes' Resource paths.
   
   For example, when `common_name` is used simultaneously as:
   
@@ -317,7 +331,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - undefined behavior (when a Plugin's Resources are accidentally overridden by another Plugin, given that Plugins don't have any hierarchy or explicit order).
   
   #### Separate Namespaces for Plugins
-  To address this problem, Resources supplied by Plugin Themelets can be placed in — and accessed from — their own namespace, which would result in distinct and unique paths managed by the Extension System.
+  To address this problem, Resources supplied by Plugin Themelets are placed in — and accessed from — their own namespace, which would result in distinct and unique paths managed by the Extension System.
   
   In that case, no accidental Theme–Plugin or Plugin–Plugin Resource path collisions would occur:
   
@@ -334,30 +348,30 @@ Changes that result in Theme resources being modified are defined Static Macros.
   {% include '@plugin_b/common_name/template.twig' %}
   ```
   
-  This design can, additionally, help prevent Plugins from overwriting Resources in the main namespace without doing so explicitly using Interface Macros (or other Theme modification functions), depending on chosen approach.
+  This design can, additionally, help prevent Plugins from overwriting Resources in chosen namespaces without doing so explicitly using Interface Macros (or other Theme modification functions), depending on chosen approach.
   
   Resource interactions (e.g. inheritance and overriding) will be handled separately inside each scope, taking into account the namespace, rather than just the Resource path (which may involve enforcing separate prefixes or directories for each scope). The namespace syntax used in the examples is [supported by Twig](https://twig.symfony.com/doc/3.x/api.html#twig-loader-filesystemloader).
   
-  #### Populating Plugin Namespaces
+  #### Populating Extension Namespaces
   Contributions from Themes to a Plugin's namespace (intended to override the Plugin's original Resources) can be made possible by combining Resources placed in directories referencing the target Extension's codename with its own Themelet.
   
   These can be implemented as e.g.:
   
   - **Sub-directories in Special Format**
 
-    Resources intended for a namespace of a particular Extension are placed in a special directory `ext-<codename>` (e.g. `interface/templates/ext-plugin-name/`).
+    Resources intended for a namespace of a particular Extension are placed in a special directory `ext-{codename}` (e.g. `interface/templates/ext-plugin-name/`).
   - **Separate Directories for Extensions**
 
-    Resources intended for a namespace of a particular Extension are placed in `interface/extensions/<codename>/` (e.g. `interface/extensions/plugin-name/templates/`).
+    Resources intended for a namespace of a particular Extension are placed in `interface/extensions/{codename}/` (e.g. `interface/extensions/plugin-name/templates/`).
   - **Namespace-First Directories** (preferred)
 
-    Resources for both own and foreign namespaces are placed in `interface/<namespace>/` (`interface/ext/templates/`, `interface/ext-plugin-name/templates/`).
+    Resources for both own and foreign namespaces are placed in `interface/{namespace}/` (`interface/ext/templates/`, `interface/ext-plugin-name/templates/`).
 
-    Themelets in `ext/` directories are placed in the supplying plugin's namespace automatically, without the need of appending the extension's codename to it.
+    Themelets in `ext/` directories are placed in the supplying Plugin's namespace automatically, without the need of appending the extension's codename to it.
 
   If desired, Plugins may be similarly permitted to contribute to other Plugins' namespaces.
   
-  #### Source Priority in Plugin Namespaces
+  #### Source Priority in Extension Namespaces
   In addition to preventing accidental collisions, namespaces allow for better control of intentional overrides (compared to combining all Resources in a single namespace in undefined order).
   
   While Themes are expected to override Plugin Themelets (by assigning higher priority to Themes' contributions), namespaces allow for better control of external Plugins' contributions, such as:
@@ -379,63 +393,101 @@ Changes that result in Theme resources being modified are defined Static Macros.
   Intentional overrides of a Plugin's Resources by multiple other Plugins | ⚠️ Yes; undefined priority of overriding Plugins | ⚠️ Yes; undefined priority of overriding Plugins
   
   <br>
-  
-  **Table: Themelet Namespace Interactions by Extension Type**
-  
-  Origin Extension Type | Themelet Destination Namespace | Source in Main Namespace | Source in Own Extension Namespace | Source in Any Extension Namespace
-  :--:|:--:|:--:|:--:|:--:
-  **Core Theme** | main | ✅ Yes | no own namespace | ❌ No
-  **Plugin** | extension's own | ❌ No | ✅ Yes (highest/lowest priority, depending on chosen approach) | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach)
-  **Original Theme** | main | ✅ Yes (overriding parents) | no own namespace | ✅ Yes (overriding parents)
-  **Board Theme** | main | ✅ Yes (overriding parents) | no own namespace | ✅ Yes (overriding parents)
-  
-  <br>
-  
-  **Diagram: Example Registration of Interface Resources in Namespaces**
-  
-  ![registration-of-interface-resources-in-namespaces](https://user-images.githubusercontent.com/8020837/143784207-03067ee6-cbac-4b41-a6ed-130c46d2f4e1.png)
-  
-  <br>
-  
-  #### Namespaces in Themes
-  It's possible to take advantage of namespaces in Themes to separate Resources intended for different interface types, such as:
+
+  #### Generic Namespaces
+  Resources typically supplied by Themes will be separated into namespaces according to interface type, such as:
   - the forum front-end,
   - ACP,
   - parser output,
   - email content, or
   - error messages.
   
-  This separation may help with loading such modules individually (e.g. in the ACP, the forum front-end templates are not needed).
+  The separation may help with loading such modules individually (e.g. in the ACP, the forum front-end templates are not needed).
+
+  <br>
+
+  **Table: Themelet Namespace Interactions by Extension Type**
   
+  Extension Type | Source in Generic Namespaces | Source in Own Extension Namespace | Source in Any Extension Namespace
+  :--:|:--:|:--:|:--:
+  **Core Theme** | ✅ Yes | no own namespace | ❌ No
+  **Plugin** | ❌ No | ✅ Yes (highest/lowest priority, depending on chosen approach) | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach)
+  **Original Theme** | ✅ Yes (overriding parents) | no own namespace | ✅ Yes (overriding parents)
+  **Board Theme** | ✅ Yes (overriding parents) | no own namespace | ✅ Yes (overriding parents)
+  
+  <br>
+  
+  **Diagram: Example Registration of Interface Resources in Namespaces (Lowest to Highest Priority)**
+  
+  ![registration-of-interface-resources-in-namespaces](https://user-images.githubusercontent.com/8020837/154743960-8bbf9759-2b50-4a35-b18b-a918c834e791.png)
+  
+  <br>
+
 - ### Directory Structure
+  #### Hierarchy Order
+  - Namespaces, Resource Types
+    - A. Namespace-first (e.g. `frontend/templates/member/index.twig`)
+
+         **✔ preferred** — containing Resources targeting the same interface type in the same repository; easier restructuring and reuse of Extension styling
+    - B. Resource Type-first (e.g. `templates/frontend/member/profile.twig`)
+
+  #### Hierarchy Levels
   The following storage choices were considered for each logical group in the hierarchy of Resources:
   
-  1. Extension Type
-     - **A.** Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
+  1. Supplying Extension Type
+     - A. Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
+
+       **✔ preferred** — helping encapsulate Extension files in a single directory
      - B. Themelets stored in the same directory (e.g. `inc/themes/`, splitting the Extension's Themelet from other files)
   1. Extension's Target Interface Type/Namespace
      - A. Extension Directories spread across the filesystem according to type (e.g. `inc/themes/`, `admin/themes/`)
-     - **B.** Extension Directories stored in subdirectories according to type/namespace (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
-     - C. Extension Directories stored in the same directory for all types (e.g. `inc/themes/`)
+     - B. Extension Directories stored in subdirectories according to type (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
+     - C. Extension Directories stored in the same directory for all types (e.g. `inc/themes/`) 
+
+        **✔ preferred** — the same directory used for a single theme system handling both front-end and the ACP, and allowing Themes to target multiple types
   1. Extension Package
-     - **A.** Extensions stored in directories referencing the package name (`<package-name>/`)
+     - A. Extensions stored in directories referencing the Package Name (`<package-name>/`)
   1. Themelet Path
-     - A. Themelets stored in `interface/` subdirectories of Extension Directories
-     - **B.** Themelets of Plugins stored in `interface/` subdirectories of Extension Directories, and Themelets of Themes directly in Extension Directories
+     - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `interface/`) of Extension Directories
+     - B. Themelets of Plugins stored in standardized subdirectories (e.g. `interface/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
+
+        **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
      - C. Themelets of all Extensions stored directly in Extension Directories
-  1. Latest Themelet Version (depending on chosen approach)
-     - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `interface/current/`)
-     - **B.** latest Themelets stored directly in Extension Themelet Paths (e.g. `interface/`)
-  1. Old Themelet Versions (depending on chosen approach)
-     - **A.** old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/<version>/`)
-     - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `interface/<version>/`)
-  1. Destination Namespace (depending on chosen approach)
-     - **A.** all Themelets stored in directories named according to type or namespace (e.g. `interface/base/` for main resources, and `interface/<namespace>/` for specific namespaces)
-     - B. namespace-specific Themelets stored in a directory for non-main namespaces (e.g. `interface/extensions/<namespace>/`)
-     - C. namespace-specific Themelets stored in main Themelet directories (e.g. `interface/ext-<namespace>/`)
-     - D. namespace-specific Themelets merged with main Themelets (e.g. `interface/<resource-type>/ext-<namespace>/`
-  1. Third-Party Extension Version (depending on chosen approach)
-     - **A.** version-specific Themelets stored in directories referencing the target Extension version (`<extension-version>/`)
+  1. Themelet Version
+     - Latest Themelet Version
+       - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `current/`)
+       - B. latest Themelets stored directly in Extension Themelet Paths
+
+        **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
+     - Old Themelet Versions
+       - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`) 
+
+        **✔ preferred** — removing necessity of loosening permissions of Extension directories
+       - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `{version}/`)
+  1. Target Namespace
+     - Themes
+       - A. all Themelets stored in directories named according to target namespace (`{namespace}/`) 
+
+          **✔ required** — all Resources expected to belong to a namespace
+     - Plugins
+       - Own Namespace
+         - A. directory with the Themelet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
+         
+              **✔ preferred** — own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace
+         - B. Themelet targeting the Plugin's own namespace stored directly in the Themelet directory
+       - Other Namespaces
+         - A. directories with Themelets targeting other Plugins' namespaces stored directly in the Themelet directory (e.g. `{namespace}/`)
+
+           **✔ preferred** — directory on the same level as own namespace directory
+         - B. directories with Themelets targeting other Plugins' namespaces stored in a standardized subdirectory (e.g. `extensions/{namespace}/`)
+  1. Namespace Directory Name Prefix (depending on chosen approach)
+     - A. `{namespace}/` (no prefix)
+
+        **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
+     - B. `@{namespace}/`, compatible with Twig syntax
+
+  1. Resource Group
+     - A. Resources collected into a Group stored in directories identifying Group names (e.g. `templates/`)
   
 - ### JSON Data Files
   - #### `manifest.json`
@@ -448,7 +500,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - **version** (`version`), compatible with PHP's [`version_compare()`](https://www.php.net/manual/en/function.version-compare.php)
     - **authors** (`authors`), as defined by the Composer schema
     
-    The `name` property is reserved for package names used in the Composer/Packagist ecosystem.
+    The `name` property is reserved for Package names used in the Composer/Packagist ecosystem.
     
   - #### `properties.json`
     Defines Theme-related settings and presets.
@@ -472,17 +524,18 @@ Changes that result in Theme resources being modified are defined Static Macros.
 - ### Naming
   - **Theme Packages**
     
-    Extension Package directories, in addition to uniquely identifying packages, will be used to determine their origin:
+    Extension Package directories, in addition to uniquely identifying Packages, will be used to determine their origin:
     - system (using reserved static names, e.g. `core` or `core.default`)
-    - instance-limited packages (using reserved, codename-incompatible format, referencing an internal ID, e.g. `theme.<id>` for Board Themes)
+    - instance-limited packages (using reserved, codename-incompatible format, referencing an internal ID, e.g. `theme.{id}` for Board Themes)
     - distributable packages (using the codename format enforced by the Extend platform: `[a-z_]+`)
-  - **Themelet Bundle Directories**
-    
-    Themelets supplied by Extensions (Themelet Bundles) are separated into directories indicating their target namespaces using the following formats:
-    - normal namespaces `<name>/`
-    - Extension namespaces
-      - explicit `ext-<codename>/`
-      - implicit `ext/` (resolved to the supplying Plugin's namespace)
+  - **Namespaces**
+    - Generic Namespaces: `{name}` (`[a-z_]+`)
+    - Extension Namespaces: `ext-{codename}`
+
+      Namespaces created for Plugins will use a prefix `ext-` to avoid collisions with Generic Namespaces.
+  - **Namespace Directories**
+
+    Resources supplied by a Plugin, intended for its own namespace, can be placed in an `ext/` directory, which will be assigned to the Plugin-specific namespace `ext-{codename}` automatically.
   - **Resource Directories**
 
     Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
@@ -643,70 +696,130 @@ Changes that result in Theme resources being modified are defined Static Macros.
 - **Core** — the MyBB forum software in its unmodified state and without Extensions
 - **Extend** — the official platform for MyBB Extensions hosted on MyBB.com
 - **Front-end** — the publicly accessible forum interface part of the software
-- **Web Root Directory** — MyBB's main directory (referred to by PHP constant `MYBB_ROOT`)
+- **Web Root Directory**, `<web-root-directory>` — MyBB's main directory (referred to by PHP constant `MYBB_ROOT`)
 
 *extensions*
 
-- **Extension** — a third-party component recognized by the application
-  - **Plugin** — a component intended to modify the application's behavior
-  - **Theme** — a component defining the user interface
-    - **Core Theme** — a Theme belonging to the Core, defining MyBB's default user interface; not editable during normal use
-    - **Original Theme** — a Theme maintained by third-party; not editable during normal use
-    - **Board Theme** — an editable Theme
-  - **Extension Codename** — a unique identifier associated with an extension, limited to a-z letters and underscore `_`, registered on the MyBB Extend platform
-  - **Extension Package** — a distributable set of files associated with an Extension
-  - **Extension Directory** — a directory containing files from an Extension Package, located directly under `inc/plugins/` or `inc/themes/`
+- **Extension** — a component recognized by the application
+  - - **Plugin** — a component intended to modify the application's behavior
+    - **Theme** — a component defining the user interface
+      - **Core Theme** — a Theme belonging to the Core, defining MyBB's default user interface; not editable during normal use
+      - **Original Theme** — a Theme maintained by third-party; not editable during normal use
+      - **Board Theme** — an editable Theme
+  - **[Extension] Package** — a set of files associated with an Extension
+  - **[Extension] Package Name**, `<package-name>` — a local or global (Extend platform) identifier of an Extension Package
+  - **[Extension] Codename**, `<extension-codename>` — a unique identifier associated with an extension, limited to a-z letters and underscore `_`, registered on the Extend platform
+  - **Extension Directory** — a directory containing files from an Extension Package, located directly under `inc/plugins/` or `inc/themes/` (see `<extension-directory-path>`)
   - **Extension Metadata** — information about the extension, such as the author and license, used in Extension Management
-  - **Extension Manifest File** — a `manifest.json` file in JSON format, compatible with [Composer schema](https://getcomposer.org/doc/04-schema.md), containing Extension Metadata, located directly in an Extension Directory
+  - **Extension Manifest File** — a `manifest.json` file in JSON format, compatible with [Composer schema](https://getcomposer.org/doc/04-schema.md), containing Extension Metadata, located directly in an Extension Directory (see `<extension-manifest-file-path>`)
+  - **Extension Property** — data associated with an Extension (e.g. color presets of a Theme)
+  - **Extension Properties File** — a `properties.json` file in JSON format containing Extension Properties, located directly in an Extension Directory (see `<extension-properties-file-path>`)
 - **Extension System** — the Theme System and the Plugin System
   - **Plugin System** — code responsible for execution of Plugins
+    - **Plugins Directory** — the directory where source Plugin packages are stored (see `<plugins-directory-path>`)
   - **Theme System** — code responsible for execution and rendering of Themes
+    - **Themes Directory** — the directory where source Theme packages are stored (see `<themes-directory-path>`)
 
 - **Extension Management** — code and events related to configuring Extensions
 
 *interface*
 
-- **Interface Resource** — an interface-related file intended to be processed or exposed through HTTP
+- **[Interface] Resource Namespace**, `<resource-namespace>` — the primary Resource organization unit
+  - **Generic Namespace** — a Namespace containing Resources for a particular interface (e.g. front-end, ACP, email message, etc.)
+  - **Extension Namespace** — a Plugin-specific Namespace
+- **[Interface] Resource Type**, `<resource-type>` — a classification of Resources according to method of execution or interpretation
   - **Template** — code interpreted by a template engine
     - **PHP Template** — a MyBB 1.8-style Template interpreted using `eval()` statements
     - **Twig Template** — a MyBB 1.9-style Template interpreted by Twig
-  - **Front-end Asset** — content and files intended to be exposed though HTTP
-- **Interface Resource Property** — data associated with an Interface Resource (e.g. pages to which a stylesheet is attached)
+  - **Asset** — content and files intended to be exposed though HTTP
+- **[Interface] Resource Group** — an organization unit for Resources of the same Type
+- **[Interface] Resource** — an interface-related file intended to be processed or exposed through HTTP
+  - **[Interface] Resource Property** — data associated with a Resource (e.g. pages to which a stylesheet is attached)
 
 *theme system*
 
-- **Themelet** — Interface Resources with associated properties [Interface Resource Properties]
-  - - **Direct Themelet** — a collection of a Themelet's Resources and associated Properties whose target namespace is managed by the system
-    - **Namespace Themelet** — a collection of a Themelet's Resources and associated Properties whose target namespace is defined explicitly
-- **Themelet Bundle** — a collection of Themelets intended for multiple distinct namespaces, supplied by a single Extension
-- **Interface Resource Properties File** — a `resources.json` file in JSON format, located directly in a Themelet Directory
-- **Themelet Directory** — a directory containing Interface Resources separated into subdirectories named according to their type (e.g. `templates/`, `css/`, `js/`, etc.), and the Interface Resource Properties File
+- **Themelet** — a collection of Interface Resources with their Properties
+- **[Interface] Resource Properties File** — a `resources.json` file in JSON format containing Resource Properties (see `<resource-properties-file-path>`)
+- **Themelet Directory** — a directory containing Themelet files (see `<themelet-directory-path>`)
 - **Themelet Inheritance Chain** — an ordered list of Extensions, according to which a final Themelet is resolved, where priority is defined by the number of steps away from the end of the chain
 - **Themelet Inheritance Base** — Themelet of the Core Theme and Plugin Themelets of active Plugins
 - **Resolved Themelet** — Themelet collected or composed according to a defined Themelet Inheritance Chain
 - **Compiled Themelet** — Resolved Themelet prepared for output or final interpretation (e.g. Twig templates converted to PHP code) and web-accessible static files
 
-*themes*
-
-- **Theme Property** — data associated with a Theme (e.g. color presets)
-- **Theme Properties File** — a `properties.json` file in JSON format containing Theme Properties, located directly in a Theme Definition Directory
-- **Theme Definition** — a Themelet associated with a Theme, and Theme Properties
-- **Theme Definition Directory** — a directory containing a Theme Definition, associated with a Theme and its version
-
 *macros*
 
-- **Interface Macro** — a set of changes to a Themelet that can be stored, applied, and reversed
-  - **Static Interface Macro** — an Interface Macro that operates on a Themelet and causes it to be stored in modified state
-  - **Dynamic Interface Macro** — an Interface Macro that operates on a Resolved Themelet and causes a Compiled Themelet to be stored in modified state
+- **[Interface] Macro** — a set of changes to a Themelet that can be stored, applied, and reversed
+  - **Static [Interface] Macro** — an Interface Macro that operates on a Themelet and causes it to be stored in modified state
+  - **Dynamic [Interface] Macro** — an Interface Macro that operates on a Resolved Themelet and causes a Compiled Themelet to be stored in modified state
 
 *plugin interface*
 
-- **Plugin Interface Definition** — interface-related data supplied by a Plugin
+- **Plugin Interface** — interface-related data supplied by a Plugin
   - **Plugin Themelet** — a Themelet supplied by a Plugin
   - **Plugin Interface Macro** — an Interface Macro supplied by a Plugin
-- **Plugin Interface Macro Directory** — an innermost directory in the `<extension codename>/<extension version>/` structure associated with a specific Extension and its version located in a Plugin Interface Definition Directory, containing a Plugin Interface Macro File
-- **Plugin Interface Macro File** — an `extend.php` file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory
-- **Plugin Interface Definition Directory** — an innermost directory in the `interface/<plugin version>/` structure located directly in a Plugin's Extension Directory, associated with a Plugin's version, additionally containing a `macros/` subdirectory with Plugin Interface Macro Directories
+- **[Plugin Interface] Macro Directory** — a directory containing Macro Files in subdirectories referencing targeted Extensions' Package names (see `<plugin-macro-directory-path>`)
+- **[Plugin Interface] Macro File** — an `extend.php` file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory (see `<plugin-macro-file-path>`)
+- **Plugin Interface Directory** — a directory containing Plugin Interface files (see `<plugin-interface-directory-path>`)
+
+
+### [ABNF](https://datatracker.ietf.org/doc/html/rfc5234)
+```abnf
+; Interface Resources
+resource-namespace           = 1*( a-z / "_" )           ; Generic Namespaces
+                             / "ext-" extension-codename ; Extension Namespaces
+resource-namespace-directory = resource-namespace ; explicit Namespace
+                             / "ext"              ; implicit Namespace
+                             
+resource-type             = "images"
+                          / "scripts"
+                          / "styles"
+                          / "templates"
+resource-path             = [resource-group "/"] resource-filename
+resource-group            = 1*( a-z / "_" )
+resource-filename         = 1*VCHAR "." 1*VCHAR ; name.extension
+
+resource-path-in-themelet = resource-namespace-directory "/" resource-type "/" resource-path
+absolute-resource-path    = <web-root-directory> "/" themelet-directory-path "/" resource-path-in-themelet
+
+resource-properties-file-path = themelet-directory-path "/" resource-namespace-directory "/resources.json"
+
+; Themelets
+themelet-directory-path   = themelet-source-path
+                          / themelet-archive-path
+
+themelet-source-path      = theme-interface-directory-path  ; supplied a Theme
+                          / plugin-interface-directory-path ; supplied by a Plugin
+
+themelet-archive-path     = "cache/themelets/" package-name "/" package-version
+
+; Extensions
+plugins-directory-path    = "inc/plugins"
+themes-directory-path     = "inc/themes"
+
+plugin-directory-path     = plugins-directory-path "/" plugin-package-name
+theme-directory-path      = themes-directory-path "/" theme-package-name
+
+plugin-interface-directory-path = plugin-directory-path "/interface"
+theme-interface-directory-path  = theme-directory-path
+
+extension-directory-path  = plugin-directory-path
+                          / theme-directory-path
+
+extension-manifest-file-path   = extension-directory-path "/manifest.json"
+extension-properties-file-path = extension-directory-path "/properties.json"
+
+package-name              = plugin-package-name
+                          / theme-package-name
+plugin-package-name       = extension-codename
+theme-package-name        = "core." 1*( a-z / "_" ) ; core Theme
+                          / "theme." 1*DIGIT        ; Board Theme
+                          / extension-codename      ; distributed Theme
+extension-codename        = 1*( a-z / "_" )
+package-version           = 1*VCHAR ; format supported by PHP's version-compare()
+
+plugin-macro-directory-path = themelet-directory-path "/macros"
+plugin-macro-file-path      = plugin-macro-directory-path "/" theme-package-name "/extend.php"
+```
 
 ## References
 - GitHub issue #3689 [1.9 Theme System](https://github.com/mybb/mybb/issues/3689)
