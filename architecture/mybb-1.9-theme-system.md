@@ -480,7 +480,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
            **✔ preferred** — directory on the same level as own namespace directory
          - B. directories with Themelets targeting other Plugins' namespaces stored in a standardized subdirectory (e.g. `extensions/{namespace}/`)
-  1. Namespace Directory Name Prefix (depending on chosen approach)
+  1. Namespace Directory Name Prefix
      - A. `{namespace}/` (no prefix)
 
        **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
