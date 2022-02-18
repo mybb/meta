@@ -444,36 +444,36 @@ Changes that result in Theme resources being modified are defined Static Macros.
      - B. Extension Directories stored in subdirectories according to type (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
      - C. Extension Directories stored in the same directory for all types (e.g. `inc/themes/`) 
 
-        **✔ preferred** — the same directory used for a single theme system handling both front-end and the ACP, and allowing Themes to target multiple types
+       **✔ preferred** — the same directory used for a single theme system handling both front-end and the ACP, and allowing Themes to target multiple types
   1. Extension Package
      - A. Extensions stored in directories referencing the Package Name (`<package-name>/`)
   1. Themelet Path
      - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `interface/`) of Extension Directories
      - B. Themelets of Plugins stored in standardized subdirectories (e.g. `interface/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
 
-        **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
+       **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
      - C. Themelets of all Extensions stored directly in Extension Directories
   1. Themelet Version
      - Latest Themelet Version
        - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `current/`)
        - B. latest Themelets stored directly in Extension Themelet Paths
 
-        **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
+         **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
      - Old Themelet Versions
        - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`) 
 
-        **✔ preferred** — removing necessity of loosening permissions of Extension directories
+         **✔ preferred** — removing necessity of loosening permissions of Extension directories
        - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `{version}/`)
   1. Target Namespace
      - Themes
        - A. all Themelets stored in directories named according to target namespace (`{namespace}/`) 
 
-          **✔ required** — all Resources expected to belong to a namespace
+         **✔ required** — all Resources expected to belong to a namespace
      - Plugins
        - Own Namespace
          - A. directory with the Themelet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
          
-              **✔ preferred** — own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace
+           **✔ preferred** — own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace
          - B. Themelet targeting the Plugin's own namespace stored directly in the Themelet directory
        - Other Namespaces
          - A. directories with Themelets targeting other Plugins' namespaces stored directly in the Themelet directory (e.g. `{namespace}/`)
@@ -483,7 +483,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   1. Namespace Directory Name Prefix (depending on chosen approach)
      - A. `{namespace}/` (no prefix)
 
-        **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
+       **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
      - B. `@{namespace}/`, compatible with Twig syntax
 
   1. Resource Group
