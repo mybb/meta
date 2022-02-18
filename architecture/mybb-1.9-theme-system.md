@@ -460,7 +460,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
          **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
      - Old Themelet Versions
-       - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`) 
+       - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`)
 
          **✔ preferred** — removing necessity of loosening permissions of Extension directories
        - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `{version}/`)
@@ -530,12 +530,12 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - distributable packages (using the codename format enforced by the Extend platform: `[a-z_]+`)
   - **Namespaces**
     - Generic Namespaces: `{name}` (`[a-z_]+`)
-    - Extension Namespaces: `ext-{codename}`
+    - Extension Namespaces: `ext.{codename}`
 
-      Namespaces created for Plugins will use a prefix `ext-` to avoid collisions with Generic Namespaces.
+      Namespaces created for Plugins will use a prefix `ext.` to avoid collisions with Generic Namespaces.
   - **Namespace Directories**
 
-    Resources supplied by a Plugin, intended for its own namespace, can be placed in an `ext/` directory, which will be assigned to the Plugin-specific namespace `ext-{codename}` automatically.
+    Resources supplied by a Plugin, intended for its own namespace, can be placed in an `ext/` directory, which will be assigned to the Plugin-specific namespace `ext.{codename}` automatically.
   - **Resource Directories**
 
     Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
@@ -766,7 +766,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 ```abnf
 ; Interface Resources
 resource-namespace           = 1*( a-z / "_" )           ; Generic Namespaces
-                             / "ext-" extension-codename ; Extension Namespaces
+                             / "ext." extension-codename ; Extension Namespaces
 resource-namespace-directory = resource-namespace ; explicit Namespace
                              / "ext"              ; implicit Namespace
                              
