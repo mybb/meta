@@ -158,7 +158,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Diagram: Interface Resource Inheritance Overview**
   
   ![interface-resource-inheritance-overview](https://user-images.githubusercontent.com/8020837/143784234-2915089c-6f8c-48a1-ad83-e8e57f75dee0.png)
-  
+
   <br>
   
   **Table: Themelets' Ability to Override Extension Resources**
@@ -271,7 +271,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   - **Mixed**, in which administrators and developers can interact with the target location, but some intervention by the application is required:
     - **On Archiving** — the most recent Themelet is kept in a directory with a static name, and is renamed to `{version}/` through user action before a new version is uploaded
-    - **Cold Duplicate** — Extension files are duplicated on detection to a `{version}/` directory; the static-named directory overrides content stored in `{version}/` directories as determined by the version specified in the manifest file; the files may be synchronized continuously when in development mode or on request
+    - **Cold Duplicate** — Extension files are duplicated on detection to a `{version}/` directory; the static-named directory overrides content stored in `{version}/` directories as determined by the version specified in the manifest file; subsequent changes are propagated to the existing copy
     - **Hot Duplicate** — an improved approach, where Extension files from the static-named directory are synchronized to the `{version}/` copy, where data is accessed from; may be I/O-intensive, and would require user action to break synchronization before uploading new versions
   
   <br>
@@ -283,10 +283,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Passive** | Manual | `{version}/` | ✅ Yes | ✅ Yes | ❌ No | ❌ No | n/a | ❌ No 
   **Passive** | On Detection | `{version}/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
   **Active** | Processing (Simple) | `{version}/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
-  **Active** | Processing (Compatible) | static path (for latest version) or  `{version}/` (for older versions) | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Yes; different location | n/a | ⚠️ Yes; different location 
-  **Mixed** | On Archiving | static path (for latest version) or  `{version}/` (for older versions) | ⚠️ Yes; action required | ✅ Yes | ✅ Yes | ✅ Yes | n/a | ✅ Yes 
+  **Active** | Processing (Compatible) | static path (for latest version) or  `{version}/` (for older versions) | ✅ Yes | ✅ Yes | ✅ Yes | ⚠️ Yes; different location vs. import | n/a | ⚠️ Yes; different location vs. import
+  **Mixed** | On Archiving | static path (for latest version) or  `{version}/` (for older versions) | ⚠️ Yes; action required in advance | ✅ Yes | ✅ Yes | ✅ Yes | n/a | ✅ Yes 
   **Mixed** | **Cold Duplicate** | static path (priority) or `{version}/` | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ⚠️ Yes; action required| ✅ Yes 
-  **Mixed** | Hot Duplicate | `{version}/` | ⚠️ Yes; action required | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes 
+  **Mixed** | Hot Duplicate | `{version}/` | ⚠️ Yes; action required in advance | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes 
   
   The _Cold Duplicate_ method was selected on the basis of desired features and feasibility.
 
@@ -300,7 +300,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   <br>
   
 - ### Resource Namespaces
-  #### Problem
+  #### Avoiding Path Collisions
   Saving and accessing Resources from Themes and Plugins using a single namespace (i.e. without any logical separation) may lead to overlapping Resource paths.
   
   This results in Extensions "polluting" the general-use namespace, which may lead to accidental collisions of Resource paths (Theme–Plugin, Plugin–Plugin), e.g. when using common names in template groups. Even when Plugins follow best practices to contain own Resources within unique paths using codenames (e.g. `templates/{codename}/`), Theme–Plugin conflicts may occur when valid Extension codenames use common words that may be used in Themes' Resource paths.
@@ -351,26 +351,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   This design can, additionally, help prevent Plugins from overwriting Resources in chosen namespaces without doing so explicitly using Interface Macros (or other Theme modification functions), depending on chosen approach.
   
   Resource interactions (e.g. inheritance and overriding) will be handled separately inside each scope, taking into account the namespace, rather than just the Resource path (which may involve enforcing separate prefixes or directories for each scope). The namespace syntax used in the examples is [supported by Twig](https://twig.symfony.com/doc/3.x/api.html#twig-loader-filesystemloader).
-  
-  #### Populating Extension Namespaces
-  Contributions from Themes to a Plugin's namespace (intended to override the Plugin's original Resources) can be made possible by combining Resources placed in directories referencing the target Extension's codename with its own Themelet.
-  
-  These can be implemented as e.g.:
-  
-  - **Sub-directories in Special Format**
 
-    Resources intended for a namespace of a particular Extension are placed in a special directory `ext-{codename}` (e.g. `interface/templates/ext-plugin-name/`).
-  - **Separate Directories for Extensions**
-
-    Resources intended for a namespace of a particular Extension are placed in `interface/extensions/{codename}/` (e.g. `interface/extensions/plugin-name/templates/`).
-  - **Namespace-First Directories** (preferred)
-
-    Resources for both own and foreign namespaces are placed in `interface/{namespace}/` (`interface/ext/templates/`, `interface/ext-plugin-name/templates/`).
-
-    Themelets in `ext/` directories are placed in the supplying Plugin's namespace automatically, without the need of appending the extension's codename to it.
-
-  If desired, Plugins may be similarly permitted to contribute to other Plugins' namespaces.
-  
   #### Source Priority in Extension Namespaces
   In addition to preventing accidental collisions, namespaces allow for better control of intentional overrides (compared to combining all Resources in a single namespace in undefined order).
   
@@ -815,7 +796,7 @@ theme-package-name        = "core." 1*( a-z / "_" ) ; core Theme
                           / "theme." 1*DIGIT        ; Board Theme
                           / extension-codename      ; distributed Theme
 extension-codename        = 1*( a-z / "_" )
-package-version           = 1*VCHAR ; format supported by PHP's version-compare()
+package-version           = 1*( DIGIT / a-z / "." / "-" ) ; format supported by PHP's version-compare()
 
 plugin-macro-directory-path = themelet-directory-path "/macros"
 plugin-macro-file-path      = plugin-macro-directory-path "/" theme-package-name "/extend.php"
