@@ -258,7 +258,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
     Removed files, present in past versions, won't be incorrectly included again after uploading the new version.
   
   <br>
-  
+
+  Notably, the application is expected to be distributed with default Packages (such as the Core Theme), and the design of the System will affect the development workflow of the application itself.
+
   The following types of versioning methods were considered:
   
   - **Passive**, in which the directories are versioned before being used by the Extension System:
@@ -280,6 +282,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   Type | Versioning Method | Runtime Source Directory | Overwrite Protection | Recognition of Deleted Files | Importing with Static Paths | Live Editing with Static Paths | Copy Synchronization | Exporting with Static Paths 
   --|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:
+  n/a | _No Versioning_ | static path | ❌ No | ❌ No | ✅ Yes | ✅ Yes | n/a | ✅ Yes
   **Passive** | Manual | `{version}/` | ✅ Yes | ✅ Yes | ❌ No | ❌ No | n/a | ❌ No 
   **Passive** | On Detection | `{version}/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
   **Active** | Processing (Simple) | `{version}/` | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | n/a | ❌ No 
