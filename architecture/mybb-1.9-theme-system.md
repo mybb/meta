@@ -293,15 +293,125 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   The _Cold Duplicate_ method was selected on the basis of desired features and feasibility.
 
-  Directories with old Themelets (`{version}/`) may be stored in a separate path for practical reasons (see: [Directory Structure](#directory-structure)).
+  - #### _Cold Duplicate_ method
   
-  Resources supplied by a single Package may thus be stored in multiple locations:
-  - source — directories that extension developers are expected to interact with (existing in MyBB ≤ 1.8),
-  - Theme System archive — directories with copies of source files managed by the Extension System (new),
-  - web cache — directories with processed resources saved for performance reasons, or available through HTTP (existing in MyBB ≤ 1.8).
+    Compared to _Passive_ and _Active_ methods, _Cold Duplicate_ allows to operate on standardized, static directory trees without experiencing unexpected changes, nor requiring additional processing, throughout the development cycle of a Package.
+
+    Compared to other _Mixed_ methods, old Package versions residing under static paths are generally expected to be already archived when new versions are uploaded (v. _On Archiving_), and the copying always involves the application's logic (v. _Hot Duplicate_), offering better protection from accidental overwriting of archives by not requiring additional actions beforehand; instead, the need for intervention (manual or automated) is shifted to the moment after changes are made — at the cost of additional logic for keeping archives up to date with corresponding source files.
+
+    Given that static paths — rather than versioned paths, or internal archives — are used for latest Package version references (v. _Passive_, _Active_, _Hot Duplicate_), basic features of the Theme System can use a simple _No Versioning_-like structure, and work independently of the archiving system, which itself can function as an optional background process.
+
+    While this method doesn't handle deleted files implicitly, redundant Resources may deduced with the implementation of Resource-level manifest files.
+
+    <br>
   
-  <br>
+    **Diagram: Themelet Version Addressing Priority**
   
+    <img alt="themelet-version-addressing-priority" src="https://user-images.githubusercontent.com/8020837/155187159-125f6727-3651-44c0-9654-06c9430e95a1.png" width="50%">
+  
+    <br>
+    <br>
+
+    Directories with old Themelets (`{version}/`) may be stored under a separate path for practical reasons (see: [Directory Structure](#directory-structure)).
+  
+    Effectively, Resources supplied by a single Package may be stored in multiple locations:
+    - source — directories that Extension developers are expected to interact with (existing in MyBB ≤ 1.8),
+    - Themelet archives — directories with copies of source files managed by the archiving system,
+    - web cache — directories with processed Resources saved for performance reasons, or available through HTTP (existing in MyBB ≤ 1.8).
+  
+    The directory structure will allow users to add old Themelets versions manually.
+  
+    ##### Copy Synchronization
+    The _Cold Duplicate_ method relies on:
+    - creating a copy (archive) for each new version of a Themelet, and
+    - synchronizing existing copies (archives) with the source when changes occur.
+
+    While Themelet operations (e.g. editing a Template) performed using the ACP involve the application's logic, which can reliably propagate them to version archives, the System is also expected to accept direct changes to source files of Packages. To support archiving in such scenarios, the implementation involves detecting changes that may have occurred, and addressing practical concerns related to copying files.
+  
+    - ###### Change Detection
+      Unable to subscribe and immediately react to filesystem events, the archiving system polls Extension source directories according to a strategy that balances supporting common workflows — compatible with best-practice guidance and recommendations — and optimal performance.
+      
+      Given that third-party Packages are only expected to change with new versions (with users discouraged from modifying them directly), reliable support for comparison of changes in such parent Packages (which the user may be most unfamiliar with — compared to Packages developed locally — and benefit from such features most) can be achieved without additional user interaction by monitoring Extension metadata, expected to be loaded regularly by the Theme System, and thus without additional overhead.
+      
+      Other Packages — in which direct, individual Resource modifications may occur — require a more resource-intensive monitoring of numerous files. However, the importance of automated, non-interactive archiving of such Packages is relatively lower, as in each case one or more factors apply:
+      - **First-party Authors**
+
+        Authors of Packages being modified are more likely to recognize and understand changes between versions that may need to be propagated down the inheritance chain.
+
+      - **User Experience**
+
+        Increased technical experience and familiarity with the application suggests better receptiveness to communication and prompts (within the application and its documentation) related to interaction with the archiving system's controls.
+      - **Development Environment**
+
+        While propagation of changes to used Themes — and, effectively, comparison support — is especially important for Themelets of certain origins due to their association with back-end code (_Core Themes_, _Plugins_), the risk of unaddressed breaking changes and security problems applies minimally to development installations.
+
+      It is, therefore, more acceptable to rely on interactive archiving, handled through controls in the ACP and configuration (e.g. action buttons, opt-in polling settings), or opportunistically — using data fetched by other components (e.g. file modification time that may be read to check status of other Resource caches).
+
+      <br>
+      
+      **Table: Archiving System's Themelet Package Classification**
+      Themelet Origin | Local Modifications | Expected Authors | Expected Environment | Expected User Experience | Resource File Polling
+      -|-|-|-|-|-
+      **Core Theme / Original Theme / Plugin** | **No (import only)** | Third-party | Development, Production | Low | No
+      **Core Theme / Original Theme / Plugin** | **Yes** | First-party | Development | High | Yes
+      **Versioned Board Theme** | **Yes** | First-party | Development, Production | Medium | Yes
+      **Non-versioned Board Theme** | **Yes** | First-party | Production | Low | n/a (no archiving)
+
+      <br>
+      
+      **Table: Themelet Characteristics by Origin**
+      Themelet Origin | Update Prevalence | Back-end Code Dependency | Propagation Importance | Expected Authors | Expected Authoring Environment
+      -|-|-|-|-|-
+      Core Theme | High | Yes | High | Application developers | Development
+      Plugin | Medium | Yes | High | Extension developers | Development
+      Original Theme | Medium | No | Medium | Extension developers | Development
+      Board Theme | Medium | No | Low | Webmasters | Production
+
+      <br>
+
+      **Table: Archive Health and Performance Impact by Synchronization Frequency**
+      Frequency | Target | Detection Without User Interaction | Detection With User Interaction | Production Performance Impact
+      -|-|-|-|-
+      _Continuous (no architecture support)_ | All files | Best | n/a | n/a
+      On application run | All files | Very Good | n/a | High
+      Periodic polling | All files | Good | n/a | Medium
+      Periodic polling (opt-in) | All files | n/a | Good | Low
+      Manual triggers | All files | n/a | Very Good | Low
+      On Resource query | Resource file | Good | n/a | Low/Medium *
+      
+      \* — depending on data used by the Theme System (or other application components)
+
+    - ###### Partially-uploaded Packages
+      The first step in the Package archiving logic involves identifying its version — provided in a Package manifest (metadata) file — to target the correct internal archive, to which the Themelet — provided in other Package files — is to be copied.
+      
+      Because the application — and the archiving logic — may be triggered during the process of copying or uploading new Package source files, only a subset of them may be detected until the process has finished. As files belonging to different versions of a Package must be placed in the same source directory by webmasters — overwriting the previous version — files associated with distinct versions may be mixed, resulting in a potential mismatch between the manifest file and Resource files.
+
+      While partially-uploaded Packages with latest manifest files could be archived successfully by updating the archives continuously with added or overwritten source files, a scenario involving new Resources and old metadata may result in incorrectly writing new data the old version's archive.
+
+      **Table: Basic Interpretation of Source Themelet Changes**
+
+      x | Old Resource(s) | New/Modified Resource(s)
+      --|--|--
+      **Old Metadata** | No action | Copy to existing archive |
+      **New Metadata** | Create new archive | Create new archive |
+
+      Such mismatches may be avoided by:
+      - linking the Package versions with Resources using checksums, and/or
+      - delaying (debouncing) the archiving process until a predefined period of time has elapsed since the last modification of any Package file.
+
+      <br>
+
+      See: [Examples — Themelet Source-Archive Synchronization](#themelet-source-archive-synchronization)
+  
+    <br>
+
+    The ACP may be fitted with Extension authoring tools to supplement direct changes to source files, such as:
+    - feedback relating to ongoing archiving process (e.g. time until archiving is triggered),
+    - triggering the archiving process manually (shallow — by comparing file modification times, or deep — by comparing file content),
+    - updating Resource checksums after manual changes.
+    
+    Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
+
 - ### Resource Namespaces
   #### Avoiding Path Collisions
   Saving and accessing Resources from Themes and Plugins using a single namespace (i.e. without any logical separation) may lead to overlapping Resource paths.
@@ -612,6 +722,62 @@ Changes that result in Theme resources being modified are defined Static Macros.
       $loader->prependPath(
           path: $theme->getTemplatePath(),
       );
+  }
+  ```
+
+- #### Themelet Source–Archive Synchronization
+  ```php
+  function checkExtensionArchive(\MyBB\Extension $extension): void
+  {
+      if (
+          !$extensionSystem->archiveExists(
+              extension: $extension,
+              version: $extension->getSourceVersion(),
+          )
+      ) {
+          // version not present in archives
+  
+          $extensionSystem->createArchiveFromSource($extension);
+      } else {
+          // version present in archives
+  
+          $filesToUpdate = null;
+  
+          $outOfSyncFiles = $extensionSystem->getFilesOutOfSyncWithArchive($extension);
+  
+          if ($outOfSyncFiles !== []) {
+              // changes made in source files of an archived version
+  
+              if ($extension->hasChecksumsFile()) {
+                  // the package/system supports Resource checksums
+  
+                  /*
+                   * if Resource checksums and manifest data are stored
+                   * in different files, make sure they come from the same
+                   * Package version
+                   */
+                  if ($extension->getSourceVersion() === $extension->getSourceChecksumsFileVersion()) {
+  
+                      // get files declared in the metadata file with matching checksums
+                      $verifiedFiles = $extension->getVerifiedFiles();
+  
+                      $filesToUpdate = array_intersect($outOfSyncFiles, $verifiedFiles);
+                  }
+              } else {
+                  $secondsSinceLastModified = TIME_NOW - $extension->getSourceLastModifiedDate();
+  
+                  // wait until uploads have likely finished
+                  if ($secondsSinceLastModified >= ExtensionSystem::ARCHIVE_DEBOUNCE_TIME_SECONDS) {
+                      $filesToUpdate = $outOfSyncFiles;
+                  }
+              }
+      
+              $extensionSystem->updateArchiveFromSource(
+                  extension: $extension,
+                  filesToUpdate: $filesToUpdate,
+              );
+          }
+      }
   }
   ```
 
