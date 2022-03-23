@@ -401,9 +401,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
       <br>
 
-      See: [Examples — Themelet Source-Archive Synchronization](#themelet-source-archive-synchronization)
-  
-    <br>
+      See: [Examples — Themelet Source-Archive Synchronization](#themelet-sourcearchive-synchronization)
 
     The ACP may be fitted with Extension authoring tools to supplement direct changes to source files, such as:
     - feedback relating to ongoing archiving process (e.g. time until archiving is triggered),
