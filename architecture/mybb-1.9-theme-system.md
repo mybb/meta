@@ -819,6 +819,76 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   More sophisticated means of automated resolution of otherwise manual conflicts could be developed.
 
+- #### Theme System Directory Tree
+  The following is an example of a partial directory tree related to the Theme System, featuring the internal Themelet cache and source files of:
+  - Core Theme `core.default`, contributing to namespaces `frontend` and `parser`
+  - Core Theme `core.acp`, contributing to namespace `acp`
+  - Plugin `plugin_a`, contributing to its own namespace, and that of Plugin `plugin_b`
+  - Theme `theme_a`, contributing to namespace `frontend`, and that of Plugin `plugin_b`
+
+  ```
+  .
+  ├── cache/
+  │   └── themelets/
+  │       ├── core.default/
+  │       │   ├── 1.9.0/
+  │       │   └── 1.9.1/
+  │       ├── core.acp/
+  │       │   ├── 1.9.0/
+  │       │   └── 1.9.1/
+  │       ├── plugin_a/
+  │       │   └── 1.2.3/
+  │       ├── plugin_b/
+  │       │   └── 4.5.6/
+  │       └── theme_a/
+  │           └── 7.8.9/
+  └── inc/
+      ├── plugins/
+      │   └── plugin_a/
+      │       └── interface/
+      │           ├── ext/
+      │           │   ├── images/
+      │           │   ├── scripts/
+      │           │   ├── styles/
+      │           │   ├── templates/
+      │           │   └── resources.json
+      │           └── ext.plugin_b/
+      │               ├── templates/
+      │               └── resources.json
+      └── themes/
+          ├── core.default/
+          │   ├── frontend/
+          │   │   ├── images/
+          │   │   ├── scripts/
+          │   │   ├── styles/
+          │   │   ├── templates/
+          |   |   |   └── path/
+          |   |   |       └── template.twig
+          │   │   └── resources.json
+          │   ├── parser/
+          │   │   ├── styles/
+          │   │   ├── templates/
+          │   │   └── resources.json
+          │   ├── manifest.json
+          │   └── properties.json
+          ├── core.acp/
+          │   ├── acp/
+          │   │   ├── images/
+          │   │   ├── scripts/
+          │   │   ├── styles/
+          │   │   ├── templates/
+          │   │   └── resources.json
+          │   └── manifest.json
+          └── theme_a/
+              ├── frontend/
+              │   ├── styles/
+              │   └── resources.json
+              ├── ext.plugin_b/
+              │   ├── styles/
+              │   └── resources.json
+              └── manifest.json
+  ```
+
 ## General Roadmap
 1. Fundamentals
    - move & add the default Theme's Resources according to the new filesystem structure
