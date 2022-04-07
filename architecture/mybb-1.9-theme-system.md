@@ -895,13 +895,17 @@ Changes that result in Theme resources being modified are defined Static Macros.
 1. Theme System Basics
    - copying static files (CSS, images) to web-accessible directories
    - SCSS support
-   - basic Theme Resource modification functions
+   - basic inheritance functionality
+   - basic Theme Management functionality
+   - Plugin Themelets
+   - basic Theme Resource modification functions for Extensions
    - ACP Template & stylesheet editing
 1. Theme System Improvements
    - Interface Macro API, Static Interface Macros
    - ACP UI for customizing values of CSS/SCSS variables
 1. Advanced Theme System Features
    - Dynamic Interface Macros
+   - Themelet archiving system
    - Storing history of manual and automated changes to Resources
 1. Extension System Improvements
    - `manifest.json` for Plugins
