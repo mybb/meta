@@ -114,7 +114,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   It is, however, still the administrators' responsibility to remember to only apply changes in child themes, and to review changes that occur in imported themes in order to propagate them, as needed, to resources overwritten in child themes.
 
-  MyBB ≤ 1.8's _Find Updated Templates_ functionality only supports reviewing changes to the _MyBB Master Style_ that need to be propagated manually, primarily because themes can only indicate compatibility with the core (referencing a MyBB version code; theme's templates are surfaced by the feature when their core version number is lower than that of the corresponding Master Style templates, and the template contents differ).
+  MyBB ≤ 1.8's _Find Updated Templates_ functionality only supports reviewing changes to the _MyBB Master Style_ that need to be propagated manually, primarily because themes can only indicate compatibility with the core (referencing a MyBB version code; a theme's templates are surfaced by the feature when their core version number is lower than that of the corresponding Master Style templates, and the template contents differ).
 
   <br>
 
@@ -821,6 +821,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
 - #### Theme System Directory Tree
   The following is an example of a partial directory tree related to the Theme System, featuring the internal Themelet cache and source files of:
+
   - Core Theme `core.default`, contributing to namespaces `frontend` and `parser`
   - Core Theme `core.acp`, contributing to namespace `acp`
   - Plugin `plugin_a`, contributing to its own namespace, and that of Plugin `plugin_b`
@@ -1033,7 +1034,7 @@ extension-properties-file-path = extension-directory-path "/properties.json"
 package-name              = plugin-package-name
                           / theme-package-name
 plugin-package-name       = extension-codename
-theme-package-name        = "core." 1*( a-z / "_" ) ; core Theme
+theme-package-name        = "core." 1*( a-z / "_" ) ; Core Theme
                           / "theme." 1*DIGIT        ; Board Theme
                           / extension-codename      ; distributed Theme
 extension-codename        = 1*( a-z / "_" )
