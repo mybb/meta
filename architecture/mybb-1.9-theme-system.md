@@ -580,7 +580,25 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   1. Resource Group
      - A. Resources collected into a Group stored in directories identifying Group names (e.g. `templates/`)
-  
+
+- ### Resource Routing
+  As Theme Packages are expected to contain all Resources in their own directories — themselves considered internal (not accessible through HTTP) — the application is required to process and propagate Resources from source directories to publicly-accessible locations.
+
+  While making the initial copies (e.g. when activating a Theme Package) may be trivial for all types of Resources, further changes to source files may be missed when the Resources are queried without the involvement of the application's logic.
+
+  During normal operation, the application exclusively handles Templates, and interprets declarations of individual processable Assets to appended them to pages, but doesn't track references to other Resources (e.g. images).
+
+  <br>
+
+  **Table: Application Awareness of Immediate Resource Requests**
+  Resource Type | Internal Cache | HTTP-exposed Cache | Application Logic
+  -|-|-|-
+  **Template** | Twig PHP Cache | ❌ No | ✅ Yes (server-side rendering)
+  **Style / Script** | Optional | ✅ Yes | ✅ Yes (appending to returned documents)
+  **Other** | Optional | ✅ Yes | ❌ No
+
+  The missing coverage can be achieved through the consistent usage of the `asset_url()` Twig extension function in Templates (and equivalent resolution of Resource paths internally), which, in addition to returning the correct URLs depending on CDN settings during normal operation, may point selected requests to a PHP file that would return expected content from internal source files, and provide signals to the application to check source files for changes, when in development mode.
+
 - ### JSON Data Files
   - #### `manifest.json`
     Defines metadata associated with an Extension. Expected to be compatible with the [composer.json schema](https://getcomposer.org/doc/04-schema.md#json-schema).
