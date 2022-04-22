@@ -72,7 +72,7 @@ vendor/
 
 ### Main Directories
 - ### `bin/`
-   Scripts and executables, including `cli` MyBB's main command-line interface.
+   Scripts and executables, including MyBB's main command-line interface `cli`.
 
   **Naming:** in accordance with common practice.
 
