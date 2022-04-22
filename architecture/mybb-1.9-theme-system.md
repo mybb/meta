@@ -847,7 +847,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   ```
   .
-  ├── cache/
+  ├── data/
   │   └── themelets/
   │       ├── core.default/
   │       │   ├── 1.9.0/
@@ -1031,7 +1031,7 @@ themelet-directory-path   = themelet-source-path
 themelet-source-path      = theme-interface-directory-path  ; supplied a Theme
                           / plugin-interface-directory-path ; supplied by a Plugin
 
-themelet-archive-path     = "cache/themelets/" package-name "/" package-version
+themelet-archive-path     = "data/themelets/" package-name "/" package-version
 
 ; Extensions
 plugins-directory-path    = "inc/plugins"
