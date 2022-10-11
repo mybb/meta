@@ -224,15 +224,15 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
     While Extension versions will have to be declared in manifest files and changed on subsequent releases, the potential practice of renaming directories — which may be nested deeper than the Extension Package's main directory — may be unexpected, forgotten, or lead to practical problems.
     
-    A common development workflows may involve:
+    Common development workflows may involve:
     1. copying the Extension's files into a MyBB installation (e.g. from a code repository),
     2. editing the Extension's source code and observing the effects,
     3. comparing and copying files from the MyBB installation back into the source (e.g. a code repository)
+  
+    in which case static directory names would be preferred to preserve code history and allow quick comparison.
   - **System Complexity**
 
     A logical directory structure is preferred to simplify the implementation and related code (e.g. querying data using normalized paths), and to minimize cognitive load.
-  
-    in which case static directory names would be preferred to preserve code history and allow quick comparison.
 
   Specifically, the following desired features can be identified, in order of importance:
   - **Overwrite Protection** (User Experience and Data Integrity — high importance)
