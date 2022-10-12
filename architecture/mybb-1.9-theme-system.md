@@ -70,7 +70,7 @@ The remaining Themes — *Board Themes* — will function as the customization l
 Theme files will be placed in `inc/themes/<package-name>/` directories referencing codenames or local identifiers, and implement the Themelet structure, additionally including a `properties.json` file with additional configuration and presets, and `manifest.json` with author information and metadata.
 
 #### Theme Activation
-Administrators will able activate Themes by selecting one of the Packages in the filesystem. Activated Themes will store values for supported configuration options defined in Packages (like color scheme choices).
+Administrators will be able to activate Themes by selecting one of the Packages in the filesystem. Activated Themes will store values for supported configuration options defined in Packages (like color scheme choices).
 
 #### Update Experience Improvements
 The existing mechanism of propagating Template updates will be extended to cover other Resource types, custom Themes, and Plugins, with improved usability. The system will show a comparison of upstream changes in inherited Resources that need to be copied manually, or will suggest an automatic patch.
@@ -301,7 +301,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
     Given that static paths — rather than versioned paths, or internal archives — are used for latest Package version references (v. _Passive_, _Active_, _Hot Duplicate_), basic features of the Theme System can use a simple _No Versioning_-like structure, and work independently of the archiving system, which itself can function as an optional background process.
 
-    While this method doesn't handle deleted files implicitly, redundant Resources may deduced with the implementation of Resource-level manifest files.
+    While this method doesn't handle deleted files implicitly, redundant Resources may be deduced with the implementation of Resource-level manifest files.
 
     <br>
   
@@ -586,7 +586,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   While making the initial copies (e.g. when activating a Theme Package) may be trivial for all types of Resources, further changes to source files may be missed when the Resources are queried without the involvement of the application's logic.
 
-  During normal operation, the application exclusively handles Templates, and interprets declarations of individual processable Assets to appended them to pages, but doesn't track references to other Resources (e.g. images).
+  During normal operation, the application exclusively handles Templates, and interprets declarations of individual processable Assets to append them to pages, but doesn't track references to other Resources (e.g. images).
 
   <br>
 
@@ -627,7 +627,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - pages to which a stylesheet is attached
 
 - ### Resource Groups
-  Themelet Resource type directories (e.g. `templates/`, `styles/`) may contain subdirectories separating Resources into groups (shown in a expandable/collapsible hierarchy in the ACP), which may be nested.
+  Themelet Resource type directories (e.g. `templates/`, `styles/`) may contain subdirectories separating Resources into groups (shown in an expandable/collapsible hierarchy in the ACP), which may be nested.
 
   The system may support translatable titles and descriptions for Resources and groups, provided in the JSON data files.
 
