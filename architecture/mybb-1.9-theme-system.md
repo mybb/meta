@@ -607,8 +607,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
        **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
      - B. `@{namespace}/`, compatible with Twig syntax
 
+  1. Resource Type
+     - A. Resources collected into a Type stored in directories identifying Type names (e.g. `templates/`)
   1. Resource Group
-     - A. Resources collected into a Group stored in directories identifying Group names (e.g. `templates/`)
+     - A. Resources collected into a Group stored in directories identifying Group names (e.g. `showthread/`)
 
 - ### Resource Routing
   As Theme Packages are expected to contain all Resources in their own directories — themselves considered internal (not accessible through HTTP) — the application is required to process and propagate Resources from source directories to publicly-accessible locations.
