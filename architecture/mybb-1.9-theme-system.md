@@ -410,6 +410,35 @@ Changes that result in Theme resources being modified are defined Static Macros.
     
     Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
 
+  Although, as described above, the _Cold Duplicate_ method is preferred according to this spec, a mostly working version of the alternative _Processing (Compatible)_ method has been implemented in code given its perceived advantages.
+
+  - #### _Processing (Compatible)_ method
+
+    - Advantages and rationale:
+
+      1. Minimises redundant storage: the current version of the theme is not archived until a new version is uploaded via the ACP.
+      2. Ensures that the MyBB web app is immediately aware of all theme-related changes so that it can immediately perform such tasks as archiving themelets and rebuilding caches.
+      3. Avoids the need for regular filesystem checks/monitoring.
+      4. Avoids the possibility of archives being corrupted due to auto-archiving occurring in the middle of the uploading of a new version of a themelet, and thus avoids the need to handle this scenario via checksums and/or debouncing.
+      5. Provides a smooth path towards our goal of in-app upgrades/installations of plugins and ultimately of MyBB core itself.
+
+    - Summary of the current implementation:
+
+      - Themes and plugins are installed and upgraded by an admin uploading each one as a ZIP archive via the relevant ACP page (_Themes_ and _Plugins_ respectively).
+      - MyBB then unzips the archive to a temporary directory, performs integrity checks, and, if the checks pass, moves it to the `staging/themes/` or `staging/plugins` directory respectively.
+      - If the theme/plugin is being upgraded (as opposed to being installed), then, next, MyBB archives the current version of its themelet - either `inc/themes/[codename]/current/` or `inc/plugins/[codename]/interface/current/` - to the `storage/themelets/[ext.][codename]/[version]/` directory (the "ext." prefix is only applicable for plugin themelets).
+      - MyBB then "integrates" the staged theme/plugin by, firstly, moving the `devdist` version of its themelet to the relevant `current` directory (as above, and which on upgrade has just been archived), and then, secondly, for plugins, moving the remainder of its files to its live ("integration") directory, i.e., `inc/plugins/[codename]/`.
+      - In the case of a theme, MyBB then auto-creates a (mutable) board theme from the uploaded original theme. In the case of a plugin, MyBB then installs and activates it.
+
+    - Production and development modes:
+
+      - As indicated above, there are two possible subdirectories of a themelet, whether as part of a plugin or of a theme proper: `current` and `devdist`. The `current` subdirectory is intended for production use, and is immutable except for board themes. The `devdist` subdirectory is intended for use (1) during development of the theme/plugin, and (2) for eventual distribution with the theme/plugin. It is mutable.
+      - The mode can be toggled between production and development via a ubiquitous header of the ACP's _Templates & Style_ module, as well as via the corresponding ACP _General Configuration_ » _Development Mode (Themelets)_ setting. In production mode, MyBB uses the `current` directories for all theme-related functionality; conversely, in development mode, MyBB uses, where they exist, `devdist` directories for all theme-related functionality.
+      - In development mode, developers can, via the ACP's _Templates & Style_ module, edit the properties and resources of a given themelet. These changes are written to the themelet's `devdist` directory.
+      - When a developer is satisfied with the changes, a new version of the themelet can be exported via the ACP as an importable ZIP archive, based on the themelet's `devdist` directory (Note: exporting of plugins has not yet been implemented).
+      - The developer can choose, on exporting the theme/plugin, for MyBB to automatically archive its `current` version and then recursively copy the contents of the `devdist` subdirectory to the now-empty `current` directory (Note: this feature has not yet been implemented).
+
+
 - ### Resource Namespaces
   #### Avoiding Path Collisions
   Saving and accessing Resources from Themes and Plugins using a single namespace (i.e. without any logical separation) may lead to overlapping Resource paths.
