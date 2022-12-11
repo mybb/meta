@@ -411,7 +411,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
     Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
 
   - #### _Processing (Compatible)_ method
-    Although, as described above, the _Cold Duplicate_ method is preferred according to this spec, a mostly working version of the alternative _Processing (Compatible)_ method has been implemented in code given its perceived advantages.
+    Although, as described above, the _Cold Duplicate_ method is preferred according to this spec, a mostly working version of the alternative _Processing (Compatible)_ method has been independently [implemented in code](https://github.com/lairdshaw/mybb/tree/dev-1.9-theme-system) given its perceived advantages.
 
     - Advantages and rationale:
 
