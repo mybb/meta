@@ -331,21 +331,30 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - ###### Change Detection
       Unable to subscribe and immediately react to filesystem events, the archiving system polls Extension source directories according to a strategy that balances supporting common workflows — compatible with best-practice guidance and recommendations — and optimal performance.
       
-      Given that third-party Packages are only expected to change with new versions (with users discouraged from modifying them directly), reliable support for comparison of changes in such parent Packages (which the user may be most unfamiliar with — compared to Packages developed locally — and benefit from such features most) can be achieved without additional user interaction by monitoring Extension metadata, expected to be loaded regularly by the Theme System, and thus without additional overhead.
+      - **Third-party Packages**
+
+        Given that third-party Packages are only expected to change with new versions (with users discouraged from modifying them directly), reliable support for comparison of changes in such parent Packages (which the user may be most unfamiliar with — compared to Packages developed locally — and benefit from such features most) can be achieved without additional user interaction by monitoring Extension metadata, expected to be loaded regularly by the Theme System, and thus without additional overhead.
       
-      Other Packages — in which direct, individual Resource modifications may occur — require a more resource-intensive monitoring of numerous files. However, the importance of automated, non-interactive archiving of such Packages is relatively lower, as in each case one or more factors apply:
-      - **First-party Authors**
+      - **Locally-developed Packages**
+      
+        Other Packages — in which direct, individual Resource modifications may occur — would require a more resource-intensive monitoring of numerous files. However, the importance of automated, non-interactive archiving of such Packages is relatively lower, as in each case one or more factors apply:
+        - **Experience with the Application**
 
-        Authors of Packages being modified are more likely to recognize and understand changes between versions that may need to be propagated down the inheritance chain.
+          Increased technical experience and familiarity with the application suggests better receptiveness to communication and prompts (within the application and its documentation) related to interaction with the archiving system's controls, including:
+          - creating or synchronizing archives,
+          - importing archives — that were not created automatically — from external sources.
 
-      - **User Experience**
+        - **Authoring Workflow**
 
-        Increased technical experience and familiarity with the application suggests better receptiveness to communication and prompts (within the application and its documentation) related to interaction with the archiving system's controls.
-      - **Development Environment**
+          Usage of manifests and checksums in Extensions necessitate providing inbuilt tools for creating and maintaining them, which would be interacted with by the developers. Because both the metadata tools and the archiving rely on the same input (changes to Package files), the practice of synchronizing metadata at the end of development — in preparation for distribution — provides an accurate trigger for final archive synchronization.
+        - **Development Environment**
 
-        While propagation of changes to used Themes — and, effectively, comparison support — is especially important for Themelets of certain origins due to their association with back-end code (_Core Themes_, _Plugins_), the risk of unaddressed breaking changes and security problems applies minimally to development installations.
+          While propagation of changes to used Themes — and, effectively, comparison support — is especially important for Themelets of certain origins due to their association with back-end code (_Core Themes_, _Plugins_), the risk of unaddressed breaking changes and security problems applies minimally to development installations, compared to production installations exposed on the network.
+        - **First-party Authors**
 
-      It is, therefore, more acceptable to rely on interactive archiving, handled through controls in the ACP and configuration (e.g. action buttons, opt-in polling settings), or opportunistically — using data fetched by other components (e.g. file modification time that may be read to check status of other Resource caches).
+          Authors of Packages being modified are more likely to recognize and understand changes between versions that may need to be propagated down the inheritance chain.
+
+        It is, therefore, more acceptable to rely on interactive archiving for locally-developed packages, handled through controls in the ACP and configuration (e.g. action buttons, opt-in polling settings), or opportunistically — using data fetched by other components (e.g. file modification time that may be read to check status of other Resource caches).
 
       <br>
       
@@ -378,10 +387,12 @@ Changes that result in Theme resources being modified are defined Static Macros.
       Periodic polling (opt-in) | All files | n/a | Good | Low
       Manual triggers | All files | n/a | Very Good | Low
       On Resource query | Resource file | Good | n/a | Low/Medium *
+      On application run | Metadata | Good | n/a | Low
+      Periodic polling | Metadata | Good | n/a | Low
       
       \* — depending on data used by the Theme System (or other application components)
 
-    - ###### Partially-uploaded Packages
+    - ###### Metadata Mismatch
       The first step in the Package archiving logic involves identifying its version — provided in a Package manifest (metadata) file — to target the correct internal archive, to which the Themelet — provided in other Package files — is to be copied.
       
       Because the application — and the archiving logic — may be triggered during the process of copying or uploading new Package source files, only a subset of them may be detected until the process has finished. As files belonging to different versions of a Package must be placed in the same source directory by webmasters — overwriting the previous version — files associated with distinct versions may be mixed, resulting in a potential mismatch between the manifest file and Resource files.
@@ -395,18 +406,63 @@ Changes that result in Theme resources being modified are defined Static Macros.
       **Old Metadata** | No action | Copy to existing archive |
       **New Metadata** | Create new archive | Create new archive |
 
-      Such mismatches may be avoided by:
-      - linking the Package versions with Resources using checksums, and/or
-      - delaying (debouncing) the archiving process until a predefined period of time has elapsed since the last modification of any Package file.
+      For similar reasons, the archiving process may consume updates to files incorrectly as a result of actions taken in practical development scenarios: the modification of Package files will not necessarily be preceded by a version change, which itself may not happen at all.
+
+      These problems can be addressed by only consuming Packages determined to be complete — through:
+      - checksums, linking the Package versions with Resources (most reliable), and/or
+      - time period elapsed since the last modification of any Package file (fallback).
+      
+      Detection of incomplete Packages can result in debouncing the process, providing a grace period for potential file transfers in progress.
+
+      No observable transfer in progress, together with modified files but old metadata, would be interpreted as:
+      - true file corruption, or
+      - files changed during development,
+      
+      communicated to the user in the ACP according to context and user experience, indicated by the development mode state.
 
       <br>
 
-      See: [Examples — Themelet Source-Archive Synchronization](#themelet-sourcearchive-synchronization)
+    ```mermaid
+    graph TD
+        extensionFilesModified((Extension file modified))
+        extensionFilesModified --> isExtensionKnown{Extension known?}
+        buildToolsUsed((Build tools used)) --> archive
+
+        isExtensionKnown -->|No| scheduleArchiving
+
+        isExtensionKnown -->|Yes| isExtensionVersionKnown{Version known?}
+
+        isExtensionVersionKnown -->|No| scheduleArchiving
+        isExtensionVersionKnown -->|Yes| isDevelopmentMode
+
+        isDevelopmentMode{Development Mode?} -->|No| userPrompts
+        isDevelopmentMode{Development Mode?} -->|Yes| exposeBuildTools
+
+        userPrompts{{Display mismatch warnings<br>Advertise Development Mode}}
+        exposeBuildTools{{Expose build tools}}
+        
+        scheduleArchiving{{Schedule archiving}} --> isChecksumValidationSupported{Checksums supported?}
+
+        isChecksumValidationSupported -->|Yes| isChecksumsValidationPositive{Checksums match?}
+        isChecksumValidationSupported -->|No| debounce
+
+        isChecksumsValidationPositive -->|Yes| archive((Archive))
+        isChecksumsValidationPositive -->|No| debounceChecksums
+
+        debounceChecksums[Delay by X seconds] --> hasRecentChangesChecksums{Changed in last X seconds?}
+        hasRecentChangesChecksums -->|Yes| debounceChecksums
+        hasRecentChangesChecksums -->|No| userPrompts
+
+        debounce[Delay by X seconds] --> hasRecentChanges{Changed in last X seconds?}
+        hasRecentChanges -->|Yes| debounce
+        hasRecentChanges -->|No| archive
+    ```
+
+    See: [Examples — Themelet Source-Archive Synchronization](#themelet-sourcearchive-synchronization)
 
     The ACP may be fitted with Extension authoring tools to supplement direct changes to source files, such as:
-    - feedback relating to ongoing archiving process (e.g. time until archiving is triggered),
     - triggering the archiving process manually (shallow — by comparing file modification times, or deep — by comparing file content),
-    - updating Resource checksums after manual changes.
+    - updating Resource checksums and manifests after manual changes.
     
     Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
 
