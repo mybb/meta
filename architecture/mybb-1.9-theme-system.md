@@ -451,7 +451,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
         isChecksumsValidationPositive -->|No| debounceChecksums
 
         debounceChecksums[Delay by X seconds] --> hasRecentChangesChecksums{Changed in last X seconds?}
-        hasRecentChangesChecksums -->|Yes| debounceChecksums
+        hasRecentChangesChecksums -->|Yes| isChecksumsValidationPositive
         hasRecentChangesChecksums -->|No| userPrompts
 
         debounce[Delay by X seconds] --> hasRecentChanges{Changed in last X seconds?}
