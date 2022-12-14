@@ -421,6 +421,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
       communicated to the user in the ACP according to context and user experience, indicated by the development mode state.
 
       <br>
+  
+    The ACP may be fitted with Extension authoring tools to supplement direct changes to source files, such as:
+    - triggering the archiving process manually (shallow — by comparing file modification times, or deep — by comparing file content),
+    - updating Resource checksums and manifests after manual changes.
 
     ##### Diagram: File Modification Interpretation in the Cold Duplicate Method
     ```mermaid
@@ -460,10 +464,6 @@ Changes that result in Theme resources being modified are defined Static Macros.
     ```
 
     See: [Examples — Themelet Source-Archive Synchronization](#themelet-sourcearchive-synchronization)
-
-    The ACP may be fitted with Extension authoring tools to supplement direct changes to source files, such as:
-    - triggering the archiving process manually (shallow — by comparing file modification times, or deep — by comparing file content),
-    - updating Resource checksums and manifests after manual changes.
     
     Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
 
