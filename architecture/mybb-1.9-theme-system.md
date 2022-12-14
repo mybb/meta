@@ -422,6 +422,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
       <br>
 
+    ##### Diagram: File Modification Interpretation in the Cold Duplicate Method
     ```mermaid
     graph TD
         extensionFilesModified((Extension file modified))
