@@ -427,7 +427,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
     graph TD
         extensionFilesModified((Extension file modified))
         extensionFilesModified --> isExtensionKnown{Extension known?}
-        buildToolsUsed((Build tools used)) --> archive
+        authoringToolsUsed((Authoring tools used)) --> archive
 
         isExtensionKnown -->|No| scheduleArchiving
 
@@ -437,10 +437,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
         isExtensionVersionKnown -->|Yes| isDevelopmentMode
 
         isDevelopmentMode{Development Mode?} -->|No| userPrompts
-        isDevelopmentMode{Development Mode?} -->|Yes| exposeBuildTools
+        isDevelopmentMode{Development Mode?} -->|Yes| exposeAuthoringTools
 
         userPrompts{{Display mismatch warnings<br>Advertise Development Mode}}
-        exposeBuildTools{{Expose build tools}}
+        exposeAuthoringTools{{Expose authoring tools}}
         
         scheduleArchiving{{Schedule archiving}} --> isChecksumValidationSupported{Checksums supported?}
 
