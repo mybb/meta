@@ -425,6 +425,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
     The ACP may be fitted with Extension authoring tools to supplement direct changes to source files, such as:
     - triggering the archiving process manually (shallow — by comparing file modification times, or deep — by comparing file content),
     - updating Resource checksums and manifests after manual changes.
+    
+    <br>
 
     ##### Diagram: File Modification Interpretation in the Cold Duplicate Method
     ```mermaid
