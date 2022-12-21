@@ -756,17 +756,6 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - JavaScript
     - https://github.com/mybb/mybb/issues/4328#issuecomment-813399129
 
-- ### Extension Checksums
-  The Extension System will support checksums distributed with individual Packages, as an addition to the application's own checksums.
-  
-  The verification may be triggered i.a.:
-  - manually, through ACP's _File Verification_,
-  - automatically, during periodic verification of the application's own health,
-  - after Extension upload to identify file corruption,
-  - before copying Themelets to archive storage, to ensure the correctness of the archives.
-
-  The application may provide Package authoring tools to update checksums automatically after intentional modification.
-
 - ### JSON Data Files
   - #### `manifest.json`
     Defines metadata associated with an Extension. Expected to be compatible with the [composer.json schema](https://getcomposer.org/doc/04-schema.md#json-schema).
@@ -794,7 +783,16 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - acknowledgements of parent versions (marking Resources as compatible)
     - pages to which a stylesheet is attached
 
+- ### Extension Checksums
+  The Extension System will support checksums distributed with individual Packages, as an addition to the application's own checksums.
+  
+  The verification may be triggered i.a.:
+  - manually, through ACP's _File Verification_,
+  - automatically, during periodic verification of the application's own health,
+  - after Extension upload to identify file corruption,
+  - before copying Themelets to archive storage, to ensure the correctness of the archives.
 
+  The application may provide Package authoring tools to update checksums automatically after intentional modification.
 
 - ### Resource Modification Functions
   Initially, a simple function corresponding to `find_replace_templatesets()` may be implemented to allow operations on Twig templates, possibly with better indication of errors (e.g. changes failing to apply).
