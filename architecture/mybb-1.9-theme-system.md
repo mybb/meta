@@ -659,7 +659,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   The following table summarizes the information and control available to the application, depending on the way Assets are inserted into the DOM.
 
-  **Table: Application Control of Assets by Declaration Type**
+  **Table: Application Abilities by Asset Declaration Type**
 
   Declaration Type | ℹ Static | ℹ Dynamic | ℹ Content | 🚥 Output | 🚥 Path | 🚥 Placement |
   --:|:--:|:--:|:--:|:--:|:--:|:--:|
