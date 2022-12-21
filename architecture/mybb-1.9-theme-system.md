@@ -691,6 +691,17 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   The missing coverage can be achieved through the consistent usage of the `asset_url()` Twig extension function in Templates (and equivalent resolution of Resource paths internally), which, in addition to returning the correct URLs depending on CDN settings during normal operation, may point selected requests to a PHP file that would return expected content from internal source files, and provide signals to the application to check source files for changes, when in development mode.
 
+- ### Extension Checksums
+  The Extension System will support checksums distributed with individual Packages, as an addition to the application's own checksums.
+  
+  The verification may be triggered i.a.:
+  - manually, through ACP's _File Verification_,
+  - automatically, during periodic verification of the application's own health,
+  - after Extension upload to identify file corruption,
+  - before copying Themelets to archive storage, to ensure the correctness of the archives.
+
+  The application may provide Package authoring tools to update checksums automatically after intentional modification.
+
 - ### JSON Data Files
   - #### `manifest.json`
     Defines metadata associated with an Extension. Expected to be compatible with the [composer.json schema](https://getcomposer.org/doc/04-schema.md#json-schema).
@@ -1047,6 +1058,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - **Extension Manifest File** — a `manifest.json` file in JSON format, compatible with [Composer schema](https://getcomposer.org/doc/04-schema.md), containing Extension Metadata, located directly in an Extension Directory (see `<extension-manifest-file-path>`)
   - **Extension Property** — data associated with an Extension (e.g. color presets of a Theme)
   - **Extension Properties File** — a `properties.json` file in JSON format containing Extension Properties, located directly in an Extension Directory (see `<extension-properties-file-path>`)
+  - **Extension Checksums** — checksums of files included in an Extension Package, not including the Checksums File itself
+  - **Extension Checksums File** — a `checksums` file containing Extension Checksums, located directly in an Extension Directory (see `<extension-checksums-file-path>`)
 - **Extension System** — the Theme System and the Plugin System
   - **Plugin System** — code responsible for execution of Plugins
     - **Plugins Directory** — the directory where source Plugin packages are stored (see `<plugins-directory-path>`)
@@ -1140,6 +1153,7 @@ extension-directory-path  = plugin-directory-path
 
 extension-manifest-file-path   = extension-directory-path "/manifest.json"
 extension-properties-file-path = extension-directory-path "/properties.json"
+extension-checksums-file-path  = extension-directory-path "/checksums"
 
 package-name              = plugin-package-name
                           / theme-package-name
