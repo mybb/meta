@@ -1,16 +1,19 @@
 # MyBB 1.9 Theme System
-This document presents for discussion the general design, features, and roadmap of MyBB 1.9's theme system.
+This document presents for discussion the general design, features, and roadmap of the Theme System introduced in MyBB 1.9.
 
 ## Objectives
 **Primary Objectives**
-- change the template system to use Twig
+- change the template system to use [Twig](https://twig.symfony.com/)
 
 **Secondary Objectives**
 - change the storage method of theme data to files
 - add support for theme metadata (e.g. author, version, license)
-- improve theme management experience
+- improve the theme management experience
 
 **Additional Objectives**
+- centralize asset information & management
+- add theme operations API for plugins
+- extend the _File Verification_ feature to Extensions
 - prepare the system for the support of automated installation of extensions
 
 ## Overview
