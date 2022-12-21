@@ -690,6 +690,49 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Other** | Optional | ✅ Yes | ❌ No
 
   The missing coverage can be achieved through the consistent usage of the `asset_url()` Twig extension function in Templates (and equivalent resolution of Resource paths internally), which, in addition to returning the correct URLs depending on CDN settings during normal operation, may point selected requests to a PHP file that would return expected content from internal source files, and provide signals to the application to check source files for changes, when in development mode.
+  
+- ### In-Resource Data Access
+  In addition to Resource management, the application and Plugins may need to pass data — that originates in PHP logic — for use in Resource logic.
+  This may involve integration with closed systems (e.g. Twig & _scssphp_, where variables need to be declared explicitly — as opposed to `eval()` rendering), or exposing it to upper levels of the solution stack (e.g. CSS & JavaScript) through adequate techniques.
+  
+  While variables can be added to Resources handled using custom logic (e.g. Templates rendered in Plugin hook callbacks; `<script>` tags with `data-*` parameters), it may be desirable to attach data to arbitrary Resources processed elsewhere. Additionally, developers may benefit from outsourcing such common operations, and code quality may increase when the relevant, repetitive code blocks are generated automatically.
+  
+  The application will provide a centralized, universal API to pass such data as global or Resource-specific variables.
+
+  The collected data will be assigned, exposed, or rendered according to the type of target Resource(s) and developer convenience.
+
+  This may be implemented in a form similar to:
+  ```php
+  enum VariableScope {
+      case TEMPLATES;
+      case SCRIPTS;
+      case STYLES;
+  }
+
+  /**
+   * Passes variables to Resources - globally for a given Resource type, or for specified Resource(s) only.
+   *
+   * @param VariableScope|string[]|string $scope
+   * @param array<string,string> $data
+   */
+  function pass($scope, $data): void;
+  ```
+  
+  Additionally, the `asset()` Asset declaration function may be supplemented to simultaneously accept variables passed to declared Resources.
+  
+  #### Implementation References
+  - Twig
+    - Global variables
+      - registering collected variables using https://twig.symfony.com/doc/3.x/advanced.html#globals
+    - Local variables
+      - creating a [`NodeVisitor`](https://twig.symfony.com/doc/3.x/advanced.html#creating-an-extension) to insert custom callbacks at `display_start` to compiled templates, allowing the modification of local variables before display
+  - CSS
+    - [https://developer.mozilla.org/en-US/docs/Web/CSS/--*](https://developer.mozilla.org/en-US/docs/Web/CSS/--*)
+    - https://developer.mozilla.org/en-US/docs/Web/CSS/attr
+  - SCSS
+    - https://scssphp.github.io/scssphp/docs/extending/preset-variables.html
+  - JavaScript
+    - https://github.com/mybb/mybb/issues/4328#issuecomment-813399129
 
 - ### Extension Checksums
   The Extension System will support checksums distributed with individual Packages, as an addition to the application's own checksums.
