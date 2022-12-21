@@ -794,25 +794,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - acknowledgements of parent versions (marking Resources as compatible)
     - pages to which a stylesheet is attached
 
-- ### Naming
-  - **Theme Packages**
-    
-    Extension Package directories, in addition to uniquely identifying Packages, will be used to determine their origin:
-    - system (using reserved static names, e.g. `core` or `core.default`)
-    - instance-limited packages (using reserved, codename-incompatible format, referencing an internal ID, e.g. `theme.{id}` for Board Themes)
-    - distributable packages (using the codename format enforced by the Extend platform: `[a-z_]+`)
-  - **Namespaces**
-    - Generic Namespaces: `{name}` (`[a-z_]+`)
-    - Extension Namespaces: `ext.{codename}`
 
-      Namespaces created for Plugins will use a prefix `ext.` to avoid collisions with Generic Namespaces.
-  - **Namespace Directories**
-
-    Resources supplied by a Plugin, intended for its own namespace, can be placed in an `ext/` directory, which will be assigned to the Plugin-specific namespace `ext.{codename}` automatically.
-  - **Resource Directories**
-
-    Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
-    E.g. CSS files are placed in `styles/`, instead of `css/` or `stylesheets/`, as the directory may also contain SCSS files.
 
 - ### Resource Modification Functions
   Initially, a simple function corresponding to `find_replace_templatesets()` may be implemented to allow operations on Twig templates, possibly with better indication of errors (e.g. changes failing to apply).
@@ -903,6 +885,26 @@ Changes that result in Theme resources being modified are defined Static Macros.
      - A. Resources collected into a Type stored in directories identifying Type names (e.g. `templates/`)
   1. Resource Group
      - A. Resources collected into a Group stored in directories identifying Group names (e.g. `showthread/`)
+
+- ### Naming
+  - **Theme Packages**
+    
+    Extension Package directories, in addition to uniquely identifying Packages, will be used to determine their origin:
+    - system (using reserved static names, e.g. `core` or `core.default`)
+    - instance-limited packages (using reserved, codename-incompatible format, referencing an internal ID, e.g. `theme.{id}` for Board Themes)
+    - distributable packages (using the codename format enforced by the Extend platform: `[a-z_]+`)
+  - **Namespaces**
+    - Generic Namespaces: `{name}` (`[a-z_]+`)
+    - Extension Namespaces: `ext.{codename}`
+
+      Namespaces created for Plugins will use a prefix `ext.` to avoid collisions with Generic Namespaces.
+  - **Namespace Directories**
+
+    Resources supplied by a Plugin, intended for its own namespace, can be placed in an `ext/` directory, which will be assigned to the Plugin-specific namespace `ext.{codename}` automatically.
+  - **Resource Directories**
+
+    Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
+    E.g. CSS files are placed in `styles/`, instead of `css/` or `stylesheets/`, as the directory may also contain SCSS files.
 
 ## Examples
 - #### `resources.json` Structure
