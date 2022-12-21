@@ -673,7 +673,91 @@ Changes that result in Theme resources being modified are defined Static Macros.
   1. Resource Group
      - A. Resources collected into a Group stored in directories identifying Group names (e.g. `showthread/`)
 
-- ### Resource Routing
+- ### Asset Management
+  The application will provide centralized management of Assets.
+  
+  In addition to appending Assets declared in Themelets' Resource Properties, an API will provide:
+  - helper functions, e.g. generating Asset URLs,
+  - code generation functions (`<script>`, `<link>`, `<image>` etc.),
+  - Asset appending functions, delegating the choice of codes, locations, and techniques to the application.
+
+  The API function signatures may be similar to:
+  ```php
+  /*
+   * @param $path     The path to the Asset.
+   * @param $type     The Asset type identifier. Deduced from `$path` if not provided.
+   * @param $absolute Whether `$path` is an absolute path (not managed by the Theme System).
+   */
+  function asset_url(string $path, ?string $type = null, bool $absolute = false): string;
+
+  /*
+   * Output an Asset HTML tag, or delegates appending it to the DOM to the application.
+   *
+   * @param $path     The path to the Asset.
+   * @param $type     The Asset type identifier. Deduced from `$path` if not provided.
+   * @param $absolute Whether `$path` is an absolute path (not managed by the Theme System).
+   * @param $local    Whether the Asset HTML tag should be returned, rather than delegating the appending of it.
+   * @param $data     Data to be passed for usage in the Asset's code.
+   *
+   * @return If `$local` is `true`, the tag HTML.
+   */
+  function asset(string $path, ?string $type = null, bool $absolute = false, bool $local = false, array $data = []): string|void;
+  ```
+
+  The functions will be exposed for usage in i.a.:
+  - the core application code,
+  - Plugin code,
+  - Twig Templates.
+
+  #### Centralized Asset Control Features
+  Depending on the method of Asset declaration, the application may be simultaneously provided with information related to Resource usage, as well as control of certain inclusion method aspects.
+  
+  These may allow it to offer i.a.:
+  - Resource HTTP request monitoring & change detection ([Special Asset Routing](#special-asset-routing)),
+  - caching, compression, and CDN synchronization of all Resources at once,
+  - optimization (by choosing the appropriate placement in the DOM),
+  - cache bypass for developers,
+  - management of i.a. [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) and [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity),
+  - static analysis.
+
+  The following table summarizes the information and control available to the application, depending on the way Assets are inserted into the DOM.
+
+  **Table: Application Control of Assets by Declaration Type**
+
+  Declaration Type | ℹ Static | ℹ Dynamic | ℹ Content | 🚥 Output | 🚥 Path | 🚥 Placement |
+  --:|:--:|:--:|:--:|:--:|:--:|:--:|
+  **Themelet Manifest** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+  **`asset()`** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+  **`asset()` rendered locally** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
+  **Harcoded with `asset_url()`** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No |
+  **Harcoded** | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No |
+  **Embedded** [[1]](https://github.com/mybb/mybb/issues/4328) | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+
+  The application has:
+  - _ℹ Awareness_:
+    - **Static**: can query Resource metadata without reliance on external logic
+    - **Dynamic**: can query Resource metadata only when declared by external logic
+    - **Content**: can query the Resource content, stored in a separate file
+  - _🚥 Control_:
+    - **Placement**: can influence where the Resource is placed in the DOM
+    - **Output**: can influence the HTML representing the Resource
+    - **Path**: can influence the path to the Resource
+
+  #### Asset Conditions
+  The following types of Asset conditions can be identified:
+  
+  1. Determined centrally:
+     1. inheritance-based (Assets may be added and removed along the Inheritance Chain)
+     1. `attached_to` _script_ and _action_ (`[script].php?action=[action]`) (MyBB ≤ 1.8)
+     1. dependency on other Assets
+  1. Determined locally & delegated for appending (allowing further centrally-controlled conditions):
+     1. according to logic contained in Twig templates that may result in the `{{ asset() }}` function being called
+     1. according to application or Plugin PHP logic that may result in the `asset()` function being called
+  1. Determined & appended locally:
+     1. according to logic contained in Twig templates that may result in the presence of local HTML
+     1. according to application or Plugin PHP logic that may result in the presence of local HTML
+
+  #### Special Asset Routing
   As Theme Packages are expected to contain all Resources in their own directories — themselves considered internal (not accessible through HTTP) — the application is required to process and propagate Resources from source directories to publicly-accessible locations.
 
   While making the initial copies (e.g. when activating a Theme Package) may be trivial for all types of Resources, further changes to source files may be missed when the Resources are queried without the involvement of the application's logic.
@@ -682,14 +766,15 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   <br>
 
-  **Table: Application Awareness of Immediate Resource Requests**
+  **Table: Application Awareness of Immediate Resource Requests by Type**
   Resource Type | Internal Cache | HTTP-exposed Cache | Application Logic
   -|-|-|-
   **Template** | Twig PHP Cache | ❌ No | ✅ Yes (server-side rendering)
   **Style / Script** | Optional | ✅ Yes | ✅ Yes (appending to returned documents)
   **Other** | Optional | ✅ Yes | ❌ No
 
-  The missing coverage can be achieved through the consistent usage of the `asset_url()` Twig extension function in Templates (and equivalent resolution of Resource paths internally), which, in addition to returning the correct URLs depending on CDN settings during normal operation, may point selected requests to a PHP file that would return expected content from internal source files, and provide signals to the application to check source files for changes, when in development mode.
+  The missing coverage can be achieved through the consistent usage of the `asset_url()` Twig extension function in Templates (and equivalent resolution of Resource paths internally), which, in addition to returning the correct URLs depending on CDN settings during normal operation, may point selected requests to a PHP file that would return expected content from internal source files (when they cannot be accessed directly through HTTP), and provide signals to the application to check source files for changes, when in development mode.
+  
   
 - ### In-Resource Data Access
   In addition to Resource management, the application and Plugins may need to pass data — that originates in PHP logic — for use in Resource logic.
