@@ -605,6 +605,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   <br>
 
+- ### Resource Groups
+  Themelet Resource type directories (e.g. `templates/`, `styles/`) may contain subdirectories separating Resources into groups (shown in an expandable/collapsible hierarchy in the ACP), which may be nested.
+
+  The system may support translatable titles and descriptions for Resources and groups, provided in the JSON data files.
 
 - ### Asset Management
   The application will provide centralized management of Assets.
@@ -789,11 +793,6 @@ Changes that result in Theme resources being modified are defined Static Macros.
     Contains:
     - acknowledgements of parent versions (marking Resources as compatible)
     - pages to which a stylesheet is attached
-
-- ### Resource Groups
-  Themelet Resource type directories (e.g. `templates/`, `styles/`) may contain subdirectories separating Resources into groups (shown in an expandable/collapsible hierarchy in the ACP), which may be nested.
-
-  The system may support translatable titles and descriptions for Resources and groups, provided in the JSON data files.
 
 - ### Naming
   - **Theme Packages**
