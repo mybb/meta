@@ -605,73 +605,6 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   <br>
 
-- ### Directory Structure
-  #### Hierarchy Order
-  - Namespaces, Resource Types
-    - A. Namespace-first (e.g. `frontend/templates/member/index.twig`)
-
-         **✔ preferred** — containing Resources targeting the same interface type in the same repository; easier restructuring and reuse of Extension styling
-    - B. Resource Type-first (e.g. `templates/frontend/member/profile.twig`)
-
-  #### Hierarchy Levels
-  The following storage choices were considered for each logical group in the hierarchy of Resources:
-  
-  1. Supplying Extension Type
-     - A. Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
-
-       **✔ preferred** — helping encapsulate Extension files in a single directory
-     - B. Themelets stored in the same directory (e.g. `inc/themes/`, splitting the Extension's Themelet from other files)
-  1. Extension's Target Interface Type/Namespace
-     - A. Extension Directories spread across the filesystem according to type (e.g. `inc/themes/`, `admin/themes/`)
-     - B. Extension Directories stored in subdirectories according to type (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
-     - C. Extension Directories stored in the same directory for all types (e.g. `inc/themes/`) 
-
-       **✔ preferred** — the same directory used for a single theme system handling both front-end and the ACP, and allowing Themes to target multiple types
-  1. Extension Package
-     - A. Extensions stored in directories referencing the Package Name (`<package-name>/`)
-  1. Themelet Path
-     - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `interface/`) of Extension Directories
-     - B. Themelets of Plugins stored in standardized subdirectories (e.g. `interface/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
-
-       **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
-     - C. Themelets of all Extensions stored directly in Extension Directories
-  1. Themelet Version
-     - Latest Themelet Version
-       - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `current/`)
-       - B. latest Themelets stored directly in Extension Themelet Paths
-
-         **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
-     - Old Themelet Versions
-       - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`)
-
-         **✔ preferred** — removing necessity of loosening permissions of Extension directories
-       - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `{version}/`)
-  1. Target Namespace
-     - Themes
-       - A. all Themelets stored in directories named according to target namespace (`{namespace}/`) 
-
-         **✔ required** — all Resources expected to belong to a namespace
-     - Plugins
-       - Own Namespace
-         - A. directory with the Themelet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
-         
-           **✔ preferred** — own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace
-         - B. Themelet targeting the Plugin's own namespace stored directly in the Themelet directory
-       - Other Namespaces
-         - A. directories with Themelets targeting other Plugins' namespaces stored directly in the Themelet directory (e.g. `{namespace}/`)
-
-           **✔ preferred** — directory on the same level as own namespace directory
-         - B. directories with Themelets targeting other Plugins' namespaces stored in a standardized subdirectory (e.g. `extensions/{namespace}/`)
-  1. Namespace Directory Name Prefix
-     - A. `{namespace}/` (no prefix)
-
-       **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
-     - B. `@{namespace}/`, compatible with Twig syntax
-
-  1. Resource Type
-     - A. Resources collected into a Type stored in directories identifying Type names (e.g. `templates/`)
-  1. Resource Group
-     - A. Resources collected into a Group stored in directories identifying Group names (e.g. `showthread/`)
 
 - ### Asset Management
   The application will provide centralized management of Assets.
@@ -903,6 +836,74 @@ Changes that result in Theme resources being modified are defined Static Macros.
   <br>
 
   Plugins will continue to be able to perform insert, removal, and modification operations on such Resource types programmatically, using existing functions and libraries. These types will not be supported for Themes, which can supply no executable code recognized by the system.
+
+- ### Directory Structure
+  #### Hierarchy Order
+  - Namespaces, Resource Types
+    - A. Namespace-first (e.g. `frontend/templates/member/index.twig`)
+
+         **✔ preferred** — containing Resources targeting the same interface type in the same repository; easier restructuring and reuse of Extension styling
+    - B. Resource Type-first (e.g. `templates/frontend/member/profile.twig`)
+
+  #### Hierarchy Levels
+  The following storage choices were considered for each logical group in the hierarchy of Resources:
+  
+  1. Supplying Extension Type
+     - A. Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
+
+       **✔ preferred** — helping encapsulate Extension files in a single directory
+     - B. Themelets stored in the same directory (e.g. `inc/themes/`, splitting the Extension's Themelet from other files)
+  1. Extension's Target Interface Type/Namespace
+     - A. Extension Directories spread across the filesystem according to type (e.g. `inc/themes/`, `admin/themes/`)
+     - B. Extension Directories stored in subdirectories according to type (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
+     - C. Extension Directories stored in the same directory for all types (e.g. `inc/themes/`) 
+
+       **✔ preferred** — the same directory used for a single theme system handling both front-end and the ACP, and allowing Themes to target multiple types
+  1. Extension Package
+     - A. Extensions stored in directories referencing the Package Name (`<package-name>/`)
+  1. Themelet Path
+     - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `interface/`) of Extension Directories
+     - B. Themelets of Plugins stored in standardized subdirectories (e.g. `interface/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
+
+       **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
+     - C. Themelets of all Extensions stored directly in Extension Directories
+  1. Themelet Version
+     - Latest Themelet Version
+       - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `current/`)
+       - B. latest Themelets stored directly in Extension Themelet Paths
+
+         **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
+     - Old Themelet Versions
+       - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`)
+
+         **✔ preferred** — removing necessity of loosening permissions of Extension directories
+       - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `{version}/`)
+  1. Target Namespace
+     - Themes
+       - A. all Themelets stored in directories named according to target namespace (`{namespace}/`) 
+
+         **✔ required** — all Resources expected to belong to a namespace
+     - Plugins
+       - Own Namespace
+         - A. directory with the Themelet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
+         
+           **✔ preferred** — own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace
+         - B. Themelet targeting the Plugin's own namespace stored directly in the Themelet directory
+       - Other Namespaces
+         - A. directories with Themelets targeting other Plugins' namespaces stored directly in the Themelet directory (e.g. `{namespace}/`)
+
+           **✔ preferred** — directory on the same level as own namespace directory
+         - B. directories with Themelets targeting other Plugins' namespaces stored in a standardized subdirectory (e.g. `extensions/{namespace}/`)
+  1. Namespace Directory Name Prefix
+     - A. `{namespace}/` (no prefix)
+
+       **✔ preferred** — avoiding less-readable encoded characters in URLs in code repositories
+     - B. `@{namespace}/`, compatible with Twig syntax
+
+  1. Resource Type
+     - A. Resources collected into a Type stored in directories identifying Type names (e.g. `templates/`)
+  1. Resource Group
+     - A. Resources collected into a Group stored in directories identifying Group names (e.g. `showthread/`)
 
 ## Examples
 - #### `resources.json` Structure
