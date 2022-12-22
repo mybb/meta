@@ -472,7 +472,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
     
     Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
 
-  - #### _Processing (Compatible)_ method
+  - <details><summary><h4><i>Processing (Compatible)</i> method</h4></summary>
+    
     Although, as described above, the _Cold Duplicate_ method is preferred according to this spec, a mostly working version of the alternative _Processing (Compatible)_ method has been independently [implemented in code](https://github.com/lairdshaw/mybb/tree/dev-1.9-theme-system) given its perceived advantages.
 
     - Advantages and rationale:
@@ -498,6 +499,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
       - In development mode, developers can, via the ACP's _Templates & Style_ module, edit the properties and resources of a given themelet. These changes are written to the themelet's `devdist` directory.
       - When a developer is satisfied with the changes, a new version of the themelet can be exported via the ACP as an importable ZIP archive, based on the themelet's `devdist` directory (Note: exporting of plugins has not yet been implemented).
       - The developer can choose, on exporting the theme/plugin, for MyBB to automatically archive its `current` version and then recursively copy the contents of the `devdist` subdirectory to the now-empty `current` directory (Note: this feature has not yet been implemented).
+    </details>
 
 
 - ### Resource Namespaces
