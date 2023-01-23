@@ -801,6 +801,173 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   With the implementation of Interface Macros, such functions will be deprecated.
 
+- ### Static Interface Macros
+
+  Template modification practices commonly known in MyBB ≤ 1.8 involve two sets of mirrored instructions: one to apply, and one to revert changes — usually executed during plugin installation (or reactivation) and uninstallation (or deactivation), respectively. This requires extension developers to maintain custom and repetitive logic for basic tasks.
+
+  In order to modify Resource code, the following information is required:
+  - the involved string literals (required for insertion operations) or range (sufficient for deletion operations), and
+  - the position(s) where the changes are to be made.
+
+  While some instruction types provide all data necessary to both apply and revert changes — and can thus be easily reversed using "apply" sets only — other ones may not provide the deleted literals explicitly, and/or result in distorted position information after being applied.
+
+  Although these shortcomings may be addressed using explicit "revert" instructions — by including original content, and substitute position information — applicable to already-modified versions — those may be error-prone, difficult to maintain, and prohibit certain types of instructions (e.g. using regular expressions).
+
+  To fully support reversal without side-effects, the position of modifications must be known, and be appropriately corrected — preferably with high tolerance of changes to surrounding code that may result in generally unwarranted conflicts. Similarly, the affected string literals must be preserved for potential re-insertion.
+
+  To improve developer experience, reduce the possibility of avoidable human errors, provide reliable reversal, upgrading, and overall control of Resource modifications, and support more complex operations, the Macro system will:
+  - preserve the involved literals for re-insertion and cross-reference, and
+  - mark positions involved in automated changes in Resource content,
+
+  effectively eliminating the need for explicit "revert" instructions.
+
+  <br>
+
+  **Table: Macro Instruction Characteristics**
+  Instruction | Atomic Operations | Deleted Literal Provided | Inserted Literal Provided | Stable Position Reference Provided | Change of Existing Content
+  :-:|:-:|:-:|:-:|:-:|:-:
+  **Prepend** | ➕ Insert | n/a | ✅ Yes | ❌ No <sup>[I]</sup> | ❌ No
+  **Append** | ➕ Insert | n/a | ✅ Yes | ❌ No <sup>[I]</sup> | ❌ No
+  **Set Content** | ➖ Delete<br>➕ Insert | ❌ No <sup>[R]</sup> | ✅ Yes | n/a | ✅ Yes
+  **Insert** | ➕ Insert | n/a | ✅ Yes | ❌ No <sup>[I]</sup> | ✅ Yes
+  **Insert (regex)** | ➕ Insert | n/a | ✅ Yes | ❌ No <sup>[F]</sup> <sup>[I]</sup> | ✅ Yes
+  **Replace** | ➖ Delete<br>➕ Insert | ✅ Yes | ✅ Yes |  ❌ No <sup>[D]</sup> | ✅ Yes
+  **Replace (regex)** | ➖ Delete<br>➕ Insert | ❌ No <sup>[E]</sup> | ✅ Yes |  ❌ No <sup>[D]</sup> | ✅ Yes
+  **Delete** | ➖ Delete | ✅ Yes | n/a | ❌ No <sup>[D]</sup> | ✅ Yes
+  **Delete (regex)** | ➖ Delete | ❌ No <sup>[E]</sup> | n/a |  ❌ No <sup>[D]</sup> | ✅ Yes
+
+  **[D]**: deleted literal — assumed to indicate accurate position — is lost when instruction is applied<br>
+  **[E]**: literals determined when applied using regular expressions<br>
+  **[F]**: regular expression may fail to match again when changes are applied (v. lookaround expressions)<br>
+  **[I]**: inserted literal may no longer immediately precede/follow the reference when other Macros are applied<br>
+  **[R]**: range-like behavior<br>
+
+  <br>
+
+  **Table: Reversibility of Modification Instructions by Approach**
+  | Instruction | Revert Strategy | **"apply" instructions only,<br>no storage/tracking** | **"apply" + "revert" instructions,<br>no storage/tracking** | **"apply" instructions only,<br>with delta storage/tracking**
+  :-:|:-:|:-:|:-:|:-:
+  **Prepend** | Delete _INSERTED LITERAL_ at _POSITION_ | ❌ Position,<br>✅ Literals | ❌ Position **\***,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Append** | Delete _INSERTED LITERAL_ at _POSITION_ | ❌ Position,<br>✅ Literals | ❌ Position **\***,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Set Content** | Set content to _DELETED LITERAL_ | ❌ Literals | ✅ Literals | ✅ Literals
+  **Insert** | Delete _INSERTED LITERAL_ at _POSITION_ | ❌ Position,<br>✅ Literals | ❌ Position **\***,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Insert (regex)** | Delete _INSERTED LITERAL_ at _POSITION_ | ❌ Position,<br>✅ Literals | ❌ Position **\***,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Replace** | Replace _INSERTED LITERAL_ with _DELETED LITERAL_ at _POSITION_ | ❌ Position,<br>✅ Literals | ❌ Position **\***,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Replace (regex)** | Replace _INSERTED LITERAL_ with _DELETED LITERAL_ at _POSITION_ | ❌ Position,<br>❌ Literals | ❌ Position,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Delete** | Insert _DELETED LITERAL_ at _POSITION_ | ❌ Position,<br>✅ Literals | ❌ Position **\***,<br>✅ Literals | ✅ Position,<br>✅ Literals
+  **Delete (regex)** | Insert _DELETED LITERAL_ at _POSITION_ | ❌ Position,<br>❌ Literals | ❌ Position,<br>✅ Literals | ✅ Position,<br>✅ Literals
+
+  **\*** — position cannot be determined without side-effects (i.a. overbroad deletion, failing position references)<br>
+
+  <br>
+
+  #### Storage & Tracking
+  
+  While the storage requirement is generally fulfilled using a git-like diff format, the algorithm-related decisions — related to granularity (e.g. line-by-line vs character-by-character tracking) that impacts semantic accuracy (in addition to correctness of the result), and conflict avoidance — may be outside of the application's control, and make it difficult to covey the atomic modifications in individual Resources to webmasters, including details of possible modification conflicts.
+  
+  To resolve these problems, Macro system will insert **explicit "marker" literals** into Resource content itself, providing position information for all atomic changes, with syntax balanced for human readability, automatic maintenance, and low interference with source code interpretation.
+
+  Such markers would use syntax appropriate for source code comments in given language, and contain:
+  - a general Macro comment indicator,
+  - identifiers of:
+    - an individual Macro,
+    - an individual instruction declared in a Macro,
+    - an individual modification (relevant when an instruction matches more than one literal)
+  - a header, with a human-readable summary of changes.
+
+  The markers — dividing Resource content into sections added or removed by the Macro system — will provide text position information with character precision on demand, removing the overhead of storage and appropriate correction of such derived data.
+
+  The in-Resource markers will be combined with **external storage of Macros applied to Theme Packages** — resulting in a hybrid approach, where the markers and respective data are linked using a common identifier — for practical reasons (i.a. avoiding special encoding, maintaining Resource content readability, and preventing corruption from accidental modification; v. [`PluginLibrary::edit_core()`](https://github.com/frostschutz/MyBB-PluginLibrary/blob/cb290191d78fb306701ef71169f98b2cd76c569c/inc/plugins/pluginlibrary.php#L951)).
+
+  The stored active Macro data will store information about performed modifications — including status, identifiers shared with corresponding markers, and involved literals — attached to individual instructions they originate from.
+
+  ##### Marker Literals — [ABNF](https://datatracker.ietf.org/doc/html/rfc5234)
+  ```abnf
+  macro-marker-twig          = "{#~ " macro-marker " ~#}"
+  macro-marker-css           = "/*~ " macro-marker " ~*/"
+  macro-marker-javascript    = "/*~ " macro-marker " ~*/"
+
+  macro-marker               = macro-id " " macro-operation-id [" " macro-marker-header]
+  
+  macro-id                   = [macro-package-id "/"] macro-name
+                             / macro-package-id
+  macro-package-id           = package-name ":" package-version
+
+  macro-operation-id         = "#" 1*DIGIT "." 1*DIGIT
+  
+  macro-marker-header        = [ macro-marker-header-delete ", " ] macro-marker-header-insert
+                             / macro-marker-header-delete
+  macro-marker-header-insert = "+"
+  macro-marker-header-delete = "-" 1*DIGIT
+  ```
+  
+  ##### Marker Literals — Example
+  ```twig
+  {#~ hello_world:1.2.3 #1.1 + ~#}<added content>{#~ hello_world:1.2.3 #1.1 ~#}
+  <unaffected content>
+  {#~ hello_world:1.2.3 #2.1 -19 ~#}
+  <unaffected content>
+  {#~ hello_world:1.2.3 #2.2 -19 ~#}
+  {#~ hello_world:1.2.3 #3.1 -13, + ~#}<new content>{#~ hello_world:1.2.3 #3.1 ~#}
+  ```
+
+  ##### Active Macro Data — Example
+  ```json5
+  {
+    "name": "",
+    "origin_package": {
+      "codename": "hello_world",
+      "version": "1.2.3",
+    },
+    "instructions": [
+      {
+        "resource": "@frontend/example.twig",
+        "delete": "/<deleted content [0-9]+>/g",
+        "status": {
+          "success": true,
+          "operations": {
+            "2.1": {
+              "-": "<deleted content 1>",
+            },
+            "2.2": {
+              "-": "<deleted content 2>",
+            },
+          },
+        },
+      },
+      // [...]
+    ],
+  }
+  ```
+
+  The in-content marker literals may be matched in whole — according to external information — rather than parsed or interpreted for routine "apply", "revert", and integrity/conflict check operations. This may not apply to additional features, where context-less search and/or interpretation could be appropriate — e.g. identification of orphaned markers (which may result from human interference with markers or Macro data storage, or system malfunction), or special handling in code editors.
+
+  The syntax and position of marker literals may limit the granularity of modifications supported in Static Macros — changes that result in the insertion of marker comments at positions not supported by the language (e.g. inside Twig tags in Templates, or string literals and CSS values in other Resources) will be rejected.
+
+  Results of final performed modifications — including marker literals — may be additionally stored using a common, third-party format (e.g. diff) to provide a redundant method of tracking changes with little dependence on the application's logic. This safeguard may be effectively provided by the more general feature of preserving history of all changes made to Resources (manual — using the ACP — and automatic).
+
+  #### Instructions Format
+
+  A Macro definition will contain a set modification instructions, in a format suitable for safe storage and manual editing of front-end code (e.g. [JSON5](https://json5.org/)).
+  
+  Each instruction will identify one or more Resources by their path (in the [`<themelet-context-resource-path>`](#abnf) format), and information required to apply the instruction. The keys used in the data structure — indicating the instruction type, and specifying relevant literals and expressions — may be combined for brevity and developer convenience.
+
+  See: [Examples — Interface Macro Definition](#interface-macro-definition)
+
+  #### Problem Detection
+
+  The system will reject changes from Macros that may result in interference with, and dependence on, content introduced in other Macros, as well as changes not supported due to the limitations of the marker literal syntax. Failure to apply atomic changes may be propagated to parent instructions, or complete Macros, depending on chosen approach.
+
+  To detect and/or avoid conflicts, tampering, or corruption, the following techniques may be used:
+  - matching in-content marker literals according to external storage data — confirming their existence and validity — and comparing inserted content with externally-stored literals,
+  - matching external storage data according to in-content marker literals to identify orphaned markers,
+  - determining ranges of content sections from marker literals to check for potential overlapping,
+  - removing all content introduced by Macros in a temporary copy — leaving unaffected, original content — to test literal references,
+  - verifying language syntax appropriate for the modified Resource with the marker literals inserted,
+  - removing marker literal comments for exposed Assets
+
+  at arbitrary stages (e.g. before application/reverting, during Resource editing, before saving, and on request).
+
 - ### Legacy Resources
   In order to support Plugins' Resources inserted into the legacy, database-only system, the existing code will be used to combine them with Resources queried from the new system during resolution.
 
@@ -1031,29 +1198,26 @@ Changes that result in Theme resources being modified are defined Static Macros.
   ```
 
 - #### Interface Macro Definition
-  A Macro can be expressed programmatically as data objects in a form similar to:
+  A Macro can be expressed in the JSON5 format, in a form similar to:
 
-  ```php
-  // an array of theme changes
-  return [
-      // add a template
-      \MyBB\ExtendTheme\Template('custom_page.twig')
-          ->setContent('Hello {{ username }}'),
-  
-      // modify existing template
-      \MyBB\ExtendTheme\Template('index.twig')
-          ->insertBefore(
-              '<a href="custom_page.php">Custom Page</a>',
-              '<!-- end: navigation -->',
-          ),
-  
-      // add a stylesheet from file
-      \MyBB\ExtendTheme\Stylesheet('custom_page.css')
-         ->setContentFromFile(MYPLUGIN_DIRECTORY . '/stylesheets/custom_page.css')
-         ->setAttachedTo('custom_page.php'),
-  ];
+  ```json5
+  [
+      {
+          resource: '@frontend/templates/examples/hello.twig',
+          set:      'Hello {{ username }}',
+      },
+      {
+          resource: '@frontend/templates/index.twig',
+          before:   '<!-- end: navigation -->',
+          insert:   '<a href="custom_page.php">Custom Page</a>',
+      },
+      {
+          resource: '@frontend/styles/page.css',
+          replace:  'var(--original-color)',
+          with:     'var(--custom-color)',
+      },
+  ]
   ```
-
 
 - #### Resource Conflict Resolution
   The `Text_Diff` third-party library already in use for MyBB 1.8 could be leveraged, in particular via its support for three-way diffs. It seems that it would need some modifications, but, generally, it could support the following implementation:
@@ -1233,13 +1397,17 @@ Changes that result in Theme resources being modified are defined Static Macros.
 - **Plugin Interface** — interface-related data supplied by a Plugin
   - **Plugin Themelet** — a Themelet supplied by a Plugin
   - **Plugin Interface Macro** — an Interface Macro supplied by a Plugin
-- **[Plugin Interface] Macro Directory** — a directory containing Macro Files in subdirectories referencing targeted Extensions' Package names (see `<plugin-macro-directory-path>`)
-- **[Plugin Interface] Macro File** — an `extend.php` file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory (see `<plugin-macro-file-path>`)
+- **[Plugin Interface] Macro Directory** — a directory containing Macro Files in subdirectories that may reference targeted Extensions' Package names (see `<plugin-macro-directory-path>`)
+- **[Plugin Interface] Macro File** — a file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory (see `<plugin-macro-file-path>`)
 - **Plugin Interface Directory** — a directory containing Plugin Interface files (see `<plugin-interface-directory-path>`)
 
 
 ### [ABNF](https://datatracker.ietf.org/doc/html/rfc5234)
 ```abnf
+; Theme System runtime references
+themelet-context-resource-path = ["@" resource-namespace "/"] resource-type "/" resource-path
+themelet-type-context-resource-path = ["@" resource-namespace "/"] resource-path
+
 ; Interface Resources
 resource-namespace           = 1*( a-z / "_" )           ; Generic Namespaces
                              / "ext." extension-codename ; Extension Namespaces
@@ -1294,8 +1462,8 @@ theme-package-name        = "core." 1*( a-z / "_" ) ; Core Theme
 extension-codename        = 1*( a-z / "_" )
 package-version           = 1*( DIGIT / a-z / "." / "-" ) ; format supported by PHP's version-compare()
 
-plugin-macro-directory-path = themelet-directory-path "/macros"
-plugin-macro-file-path      = plugin-macro-directory-path "/" theme-package-name "/extend.php"
+plugin-macro-directory-path = plugin-directory-path "/macros"
+plugin-macro-file-path      = plugin-macro-directory-path "/" [theme-package-name "/"] 1*VCHAR ".json"
 ```
 
 ## References
