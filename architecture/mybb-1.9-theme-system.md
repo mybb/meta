@@ -668,8 +668,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Themelet Manifest** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
   **`asset()`** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
   **`asset()` rendered locally** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-  **Harcoded with `asset_url()`** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No |
-  **Harcoded** | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No |
+  **Hardcoded with `asset_url()`** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No |
+  **Hardcoded** | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No |
   **Embedded** [[1]](https://github.com/mybb/mybb/issues/4328) | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 
   The application has:
