@@ -1133,29 +1133,32 @@ Changes that result in the modification of Theme resources are defined as _Stati
   ##### Active Macro Data — Example
   ```json5
   {
-    "name": "",
-    "origin_package": {
-      "codename": "hello_world",
+    "originExtension": {
+      "packageName": "hello_world",
       "version": "1.2.3",
     },
-    "instructions": [
-      {
-        "resource": "@frontend/example.twig",
-        "delete": "/<deleted content [0-9]+>/g",
-        "status": {
-          "success": true,
-          "operations": {
-            "2.1": {
+    "instructions": {
+      "1": {
+        "instruction": {
+          "resources": [
+            "templates/example.twig"
+          ],
+          "delete": "/<deleted content [0-9]+>/g",
+        },
+        "success": true,
+        "operations": {
+          "templates/example.twig": {
+            "1": {
               "-": "<deleted content 1>",
             },
-            "2.2": {
+            "2": {
               "-": "<deleted content 2>",
             },
           },
         },
       },
       // [...]
-    ],
+    },
   }
   ```
 
@@ -1171,7 +1174,36 @@ Changes that result in the modification of Theme resources are defined as _Stati
   
   Each instruction will identify one or more Resources by their path (in the [`<resource-path-in-namespace>`](#abnf) format), and information required to apply the instruction. The keys used in the data structure — indicating the instruction type, and specifying relevant literals and expressions — may be combined for brevity and developer convenience.
 
-  See: [Examples — Interface Macro Definition](#interface-macro-definition)
+  The following set was selected for the listed operations, indicating the pattern to match (defaulting to all content), and the operation to perform with the provided string:
+  - `{string} find` (optional)
+  - `{string} prepend` / `{string} append` / `{string} set` (operation type; performed on the whole text or in relation to `find`)
+  - `{bool} pattern` (regular expressions, defaulting to `false`)
+
+  Additionally, a key `{string} delete: ...` may be supported as a shorthand equivalent to { `find: ...`, `set ""` }.
+
+
+  See: [Naming](#naming) — Macro Operations
+
+  A Macro may be expressed in a form similar to:
+
+  ```json5
+  [
+      {
+          in: 'templates/examples/hello.twig',
+          set: 'Hello {{ username }}',
+      },
+      {
+          in: 'templates/index.twig',
+          find: '<!-- end: navigation -->',
+          prepend: '<a href="custom_page.php">Custom Page</a>',
+      },
+      {
+          in: 'styles/page.css',
+          find: 'var(--original-color)',
+          set: 'var(--custom-color)',
+      },
+  ]
+  ```
 
   #### Problem Detection
 
@@ -1186,6 +1218,18 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - removing marker literal comments for exposed Assets
 
   at arbitrary stages (e.g. before application/reverting, during Resource editing, before saving, and on request).
+
+  #### Status Interpretation
+
+  Macros provided by active Extensions create a condition { _package_, _version_, _namespace_, _name_ } that may be interpreted (and presented in the UI) as a requirement, suggestion, or offer of changes in all or specified downstream Themes.
+
+  To provide better adaptation and customization, the condition may be:
+  - suppressed (e.g. when installing a Plugin with unwanted or incompatible Macros),
+  - satisfied by a different Macro (from another Extension, or a custom local one)
+
+  for each target Theme.
+
+  Similarly to modified Resources, Macros applied in inherited Themes are interpreted as applied in downstream Themes. The application may support reverting upstream Macros. As Active Macros are expected to be identified by the existence of corresponding Data files in targeted Themes, the reversed status may be stored in auxiliary data files (e.g. `macros.json`) in downstream Themes.
 
 - ### Legacy Resources
   In order to support Plugins' Resources inserted into the legacy, database-only system, the existing code will be used to combine them with Resources queried from the new system during resolution.
@@ -1346,6 +1390,30 @@ Changes that result in the modification of Theme resources are defined as _Stati
     Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
     E.g. CSS files are placed in `styles/`, instead of `css/` or `stylesheets/`, as the directory may also contain SCSS files.
 
+  - **Macro Operations**
+    - `in` (short)
+      
+      Other considered options include:
+      - `resource` (long, unnecessarily more specific)
+      - `file` (unnecessarily indicates storage method)
+
+    - `delete` (standardized verb for text operations)
+
+      Other considered options include:
+      - `remove`
+
+    - `find` (common in step-by-step instructions for humans)
+    
+      Other considered options include:
+      - `at` (confusing with `@` found in Resource locator)
+      - `where`
+      - `match`
+
+    - `prepend` / `append` (clear that the provided string will be inserted)
+
+      Other considered options include:
+      - `before` / `after` (may imply the content is a `find` reference)
+
 ## Examples
 - #### `resources.json` Structure
   ```json
@@ -1421,26 +1489,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   ```
   </details>
 
-- #### Interface Macro Definition
-  A Macro can be expressed in the JSON5 format, in a form similar to:
 
-  ```json5
-  [
-      {
-          resource: '@frontend/templates/examples/hello.twig',
-          set:      'Hello {{ username }}',
-      },
-      {
-          resource: '@frontend/templates/index.twig',
-          before:   '<!-- end: navigation -->',
-          insert:   '<a href="custom_page.php">Custom Page</a>',
-      },
-      {
-          resource: '@frontend/styles/page.css',
-          replace:  'var(--original-color)',
-          with:     'var(--custom-color)',
-      },
-  ]
   ```
 - <details><summary><h4>Resource Conflict Resolution</h4></summary>
 
@@ -1616,20 +1665,20 @@ Changes that result in the modification of Theme resources are defined as _Stati
 - **Resolved Themelet** — Themelet collected or composed according to a defined Themelet Inheritance Chain
 - **Compiled Themelet** — Resolved Themelet prepared for output or final interpretation (e.g. Twig templates converted to PHP code) and web-accessible static files
 
-*macros*
-
-- **[Interface] Macro** — a set of changes to a Themelet that can be stored, applied, and reversed
-  - **Static [Interface] Macro** — an Interface Macro that operates on a Themelet and causes it to be stored in modified state
-  - **Dynamic [Interface] Macro** — an Interface Macro that operates on a Resolved Themelet and causes a Compiled Themelet to be stored in modified state
-
 *plugin interface*
 
 - **Plugin View** — interface-related data supplied by a Plugin
   - **Plugin Themelet** — a Themelet supplied by a Plugin
-  - **Plugin Interface Macro** — an Interface Macro supplied by a Plugin
-- **[Plugin Interface] Macro Directory** — a directory containing Macro Files in subdirectories that may reference targeted Extensions' Package names (see `<plugin-macro-directory-path>`)
-- **[Plugin Interface] Macro File** — a file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory (see `<plugin-macro-file-path>`)
 - **Plugin View Directory** — a directory containing Plugin View files (see `<plugin-view-directory-path>`)
+
+*macros*
+
+- **[View] Macro** — a set of changes to a Themelet that can be stored, applied, and reversed
+  - **Static [View] Macro** — an View Macro that operates on a Themelet and causes it to be stored in modified state
+  - **Dynamic [View] Macro** — an View Macro that operates on a Resolved Themelet and causes a Compiled Themelet to be stored in modified state
+- **[View] Macro Directory** — a directory containing Macro Files (see `<extension-macro-directory-path>`)
+- **[View] Macro File** — a file defining a View Macro, located in the Macro Directory (see `<extension-macro-file-path>`)
+
 
 
 ### [ABNF](https://datatracker.ietf.org/doc/html/rfc5234)
@@ -1695,8 +1744,13 @@ theme-package-name        = "core." 1*( a-z / "_" ) ; Core Theme
 extension-codename        = 1*( a-z / "_" )
 package-version           = 1*( DIGIT / a-z / "." / "-" ) ; format supported by PHP's version-compare()
 
-plugin-macro-directory-path = plugin-directory-path "/macros"
-plugin-macro-file-path      = plugin-macro-directory-path "/" [theme-package-name "/"] 1*VCHAR ".json"
+; Macros
+macro-name                     = 1*( DIGIT / a-z / "_" )
+
+extension-macro-directory-path = extension-directory-path "/view-macros"
+extension-macro-file-path      = extension-macro-directory-path "/" resource-namespace ["/" macro-name] ".json"
+
+themelet-active-macro-file-path = themelet-directory-path "/" resource-namespace-directory "/.macros/" macro-name ".json"
 ```
 
 ## References
