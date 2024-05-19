@@ -81,13 +81,13 @@ The existing mechanism of propagating Template updates will be extended to cover
 ### Plugins
 
 #### Plugin Interfaces
-Plugins will use the universal Themelet structure under `interface/` to supply own Interface Resources, and contain modification instructions for individual Themes.
+Plugins will use the universal Themelet structure under `view/` to supply own Resources, and contain modification instructions for individual Themes.
 
 Custom Resources will be added at the beginning of the inheritance chain, meaning that Themes will be able to override them to adjust Plugins visually.
 
 Similar to Themes, the system will use `manifest.json` files for metadata.
 
-#### Interface Macros
+#### View Macros
 The Extension System will expose a Theme modification API, and accept modification instructions known as *Macros*. These instructions will be handled by the System to apply, revert, and track theme changes requested by individual plugins.
 The feature can be additionally extended to support creating custom Macros using the ACP.
 
@@ -99,7 +99,7 @@ The scheme will allow a more fine-grained control for interactions between Plugi
 Storing individual Macros will allow changes to be reverted even when the extension that introduced them is removed.
 
 ##### Macro Types
-Changes that result in Theme resources being modified are defined Static Macros. This feature can be extended to allow Dynamic Macros, where changes are applied just before the Resources are rendered, leaving all source Themes intact.
+Changes that result in the modification of Theme resources are defined as _Static Macros_. This feature can be extended with _Dynamic Macros_, where changes are applied just before the Resources are rendered, leaving the original Themes intact.
 
 ## Design Notes
 - ### Addressing MyBB ≤ 1.8 Theme Management Problems
@@ -123,7 +123,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   The new Theme types adapt the second approach, by marking imported Themes as *Original Themes*, and child Themes with forum-specific adjustments as *Board Themes*. This distinction allows to skip, disallow, or discourage automatic and manual edits to downloaded Themes, keeping their original content intact. This original data can then be used to revert any custom changes, and to compare changes between various versions of the same Theme.
 
-  The Interface Macro feature separates the status of Theme changes from the status of Plugins (installation and activation), and introduces the possibility of saving manual changes with metadata, both of which could be inspected and toggled individually for each Theme.
+  The View Macro feature separates the status of Theme changes from the status of Plugins (installation and activation), and introduces the possibility of saving manual changes with metadata, both of which could be inspected and toggled individually for each Theme.
 
 - ### Theme Runtime Information
   Even though Theme Resources will be offloaded to the filesystem, some references for activated Themes will be stored in the database's `themes` table. These include instance-specific information that would not be applicable when moving a Theme to another MyBB installation.
@@ -150,15 +150,17 @@ Changes that result in Theme resources being modified are defined Static Macros.
   The remaining  database tables specific to Theme Resources (`templategroups`, `templates`, `templatesets`, `themestylesheets`) will be deleted when support for `eval()`-based templates is removed.
   
 - ### Inheritance
-  During the rendering process, individual Interface Resources will be queried from available sources (the Core, active Plugins, selected Theme and its parent Themes) in accordance with established overriding rules and priority determined by the inheritance hierarchy.
+  During the rendering process, individual Resources will be queried from available sources (the Core, active Plugins, selected Theme and its parent Themes) in accordance with established overriding rules and priority determined by the inheritance hierarchy.
   
-  The resulting Resolved Resources will be associated with individual final Themes (that can be selected by users, or as the application's default) and may be compiled and cached.
+  The list of source Themes will be built recursively, starting with the requested final Theme, by prepending declared parent Themes to the chain.
   
-  The list of source Themes will be built recursively, starting with the requested final Theme, by prepending declared parent Themes to the chain. Inheritance information declared lower in the chain will have priority, allowing child Themes to override declarations of parent Themes and their versions.
+  Inheritance chains of Resources may effectively bypass selected Themes, which inherit them without changes, and may be limited by breaking inheritance, resulting in selected Resources being treated as semantically distinct, regardless of shared names.
+
+  The resulting Resolved Resources will be associated with individual final Themes (that can be selected by users, or set as the application's default), and may be compiled and cached.
 
   <br>
   
-  **Diagram: Interface Resource Inheritance Overview**
+  **Diagram: View Resource Inheritance Overview**
   
   ![interface-resource-inheritance-overview](https://user-images.githubusercontent.com/8020837/143784234-2915089c-6f8c-48a1-ad83-e8e57f75dee0.png)
 
@@ -166,15 +168,15 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   **Table: Themelets' Ability to Override Extension Resources**
   
-  Acting Extension Type \ Target Type | Core Theme | Plugin | Original Theme | Board Theme
+  Acting Extension Type \ Target Type | Plugin | Core Theme | Original Theme | Board Theme
   :--:|:--:|:--:|:--:|:--:
-  **Core Theme** | ❌ No | ❌ No | ❌ No | ❌ No
-  **Plugin** | ❌ No | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach) | ❌ No | ❌ No
-  **Original Theme** | ✅ Yes | ✅ Yes | ✅ Yes (parents only) | ❌ No
-  **Board Theme** | ✅ Yes | ✅ Yes | ✅ Yes (parents only) | ✅ Yes (parents only)
-  
-  - A **Core Theme** is the first source in the inheritance chain, and therefore doesn't inherit Resources from other sources, and cannot override any other source.
-  - A **Plugin** may only supply own Resources that are added to the inheritance chain, or add Resources to Themelets of other Plugins.
+  **Plugin** | ❌ No | ❌ No | ❌ No | ❌ No
+  **Core Theme** | ✅ Yes | ✅ Yes (parents) | ❌ No | ❌ No
+  **Original Theme** | ✅ Yes | ✅ Yes | ✅ Yes (parents) | ❌ No
+  **Board Theme** | ✅ Yes | ✅ Yes | ✅ Yes (parents) | ✅ Yes (parents)
+
+  - A **Plugin** may only supply own Resources that are prepended to the inheritance chain, which  permits undefined order of inclusion in the chain.
+  - A **Core Theme** may override Resources from parent Core Themes, or Plugin Themelets.
   - An **Original Theme** may inherit and override Resources from the Core Theme, parent Original Themes, and Plugin Themelets.
   - A **Board Theme** may inherit and override Resources from Plugin Themelets and all parent Themes.
   
@@ -214,10 +216,11 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   Old Themelet versions can be removed manually from the filesystem, and additional tooling may be provided in the ACP for reviewing and purging unused versions.
 
-- ### Versioned Themelet Storage
+- <details><summary><h3>Versioned Themelet Storage</h3></summary>
+
   Given that Themelets are subsets of Extension Package files, and all versions — including the most recent ones — are expected to have nearly equal status (as any version can be referenced throughout the application at any time), their storage structure would be similar to:
   
-  _Extensions directory_ (`inc/plugins/`, `inc/themes/`) ← _Package_ (e.g. `{codename}/`) ← _Package Themelets_ (e.g. `interface/`) ← _Themelet_ (e.g. `{version}/`)
+  _Extensions directory_ (`inc/plugins/`, `inc/themes/`) ← _Package_ (e.g. `{codename}/`) ← _Package Themelets_ (e.g. `view/`) ← _Themelet_ (e.g. `{version}/`)
 
   Interactions with this structure affect, in order of importance:
   - **User Experience and Data Integrity**
@@ -488,7 +491,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
       - Themes and plugins are installed and upgraded by an admin uploading each one as a ZIP archive via the relevant ACP page (_Themes_ and _Plugins_ respectively).
       - MyBB then unzips the archive to a temporary directory, performs integrity checks, and, if the checks pass, moves it to the `staging/themes/` or `staging/plugins` directory respectively.
-      - If the theme/plugin is being upgraded (as opposed to being installed), then, next, MyBB archives the current version of its themelet - either `inc/themes/[codename]/current/` or `inc/plugins/[codename]/interface/current/` - to the `storage/themelets/[ext.][codename]/[version]/` directory (the "ext." prefix is only applicable for plugin themelets).
+      - If the theme/plugin is being upgraded (as opposed to being installed), then, next, MyBB archives the current version of its themelet - either `inc/themes/[codename]/current/` or `inc/plugins/[codename]/view/current/` - to the `storage/themelets/[ext.][codename]/[version]/` directory (the "ext." prefix is only applicable for plugin themelets).
       - MyBB then "integrates" the staged theme/plugin by, firstly, moving the `devdist` version of its themelet to the relevant `current` directory (as above, and which on upgrade has just been archived), and then, secondly, for plugins, moving the remainder of its files to its live ("integration") directory, i.e., `inc/plugins/[codename]/`.
       - In the case of a theme, MyBB then auto-creates a (mutable) board theme from the uploaded original theme. In the case of a plugin, MyBB then installs and activates it.
 
@@ -500,6 +503,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
       - When a developer is satisfied with the changes, a new version of the themelet can be exported via the ACP as an importable ZIP archive, based on the themelet's `devdist` directory (Note: exporting of plugins has not yet been implemented).
       - The developer can choose, on exporting the theme/plugin, for MyBB to automatically archive its `current` version and then recursively copy the contents of the `devdist` subdirectory to the now-empty `current` directory (Note: this feature has not yet been implemented).
     </details>
+  </details>
 
 
 - ### Resource Namespaces
@@ -551,7 +555,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   {% include '@plugin_b/common_name/template.twig' %}
   ```
   
-  This design can, additionally, help prevent Plugins from overwriting Resources in chosen namespaces without doing so explicitly using Interface Macros (or other Theme modification functions), depending on chosen approach.
+  This design can, additionally, help prevent Plugins from overwriting Resources in chosen namespaces without doing so explicitly using View Macros (or other Theme modification functions), depending on chosen approach.
   
   Resource interactions (e.g. inheritance and overriding) will be handled separately inside each scope, taking into account the namespace, rather than just the Resource path (which may involve enforcing separate prefixes or directories for each scope). The namespace syntax used in the examples is [supported by Twig](https://twig.symfony.com/doc/3.x/api.html#twig-loader-filesystemloader).
 
@@ -594,17 +598,17 @@ Changes that result in Theme resources being modified are defined Static Macros.
   
   Extension Type | Source in Generic Namespaces | Source in Own Extension Namespace | Source in Any Extension Namespace
   :--:|:--:|:--:|:--:
-  **Core Theme** | ✅ Yes | no own namespace | ❌ No
-  **Plugin** | ❌ No | ✅ Yes (highest/lowest priority, depending on chosen approach) | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach)
-  **Original Theme** | ✅ Yes (overriding parents) | no own namespace | ✅ Yes (overriding parents)
-  **Board Theme** | ✅ Yes (overriding parents) | no own namespace | ✅ Yes (overriding parents)
+  **Plugin** | ❌ No | ✅ Yes (lowest priority) | ❌ No
+  **Core Theme** | ✅ Yes | no own namespace | ✅ Yes (overriding ancestors)
+  **Original Theme** | ✅ Yes (overriding ancestors) | no own namespace | ✅ Yes (overriding ancestors)
+  **Board Theme** | ✅ Yes (overriding ancestors) | no own namespace | ✅ Yes (overriding ancestors)
   
   <br>
   
-  **Diagram: Example Registration of Interface Resources in Namespaces (Lowest to Highest Priority)**
   
   ![registration-of-interface-resources-in-namespaces](https://user-images.githubusercontent.com/8020837/154743960-8bbf9759-2b50-4a35-b18b-a918c834e791.png)
   
+  **Diagram: Example Registration of View Resources in Namespaces (Lowest to Highest Priority)**
   <br>
 
 - ### Resource Groups
@@ -613,7 +617,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   The system may support translatable titles and descriptions for Resources and groups, provided in the JSON data files.
 
 - ### Asset Management
-  The application will provide centralized management of Assets.
+  The application will provide centralized management of Assets, handling conversion (e.g. from SCSS to CSS), processing (e.g. minimization) and publishing to web-accessible directories.
   
   In addition to appending Assets declared in Themelets' Resource Properties, an API will provide:
   - helper functions, e.g. generating Asset URLs,
@@ -625,22 +629,22 @@ Changes that result in Theme resources being modified are defined Static Macros.
   /*
    * @param $path     The path to the Asset.
    * @param $type     The Asset type identifier. Deduced from `$path` if not provided.
-   * @param $absolute Whether `$path` is an absolute path (not managed by the Theme System).
+   * @param $static   Whether `$path` is a literal path (not managed by the Theme System).
    */
-  function asset_url(string $path, ?string $type = null, bool $absolute = false): string;
+  function asset_url(string $path, ?string $type = null, bool $static = false): string;
 
   /*
    * Output an Asset HTML tag, or delegates appending it to the DOM to the application.
    *
    * @param $path     The path to the Asset.
    * @param $type     The Asset type identifier. Deduced from `$path` if not provided.
-   * @param $absolute Whether `$path` is an absolute path (not managed by the Theme System).
+   * @param $static   Whether `$path` is a literal path (not managed by the Theme System).
    * @param $local    Whether the Asset HTML tag should be returned, rather than delegating the appending of it.
    * @param $data     Data to be passed for usage in the Asset's code.
    *
    * @return If `$local` is `true`, the tag HTML.
    */
-  function asset(string $path, ?string $type = null, bool $absolute = false, bool $local = false, array $data = []): string|void;
+  function asset(string $path, ?string $type = null, bool $static = false, bool $local = false, array $data = []): string|void;
   ```
 
   The functions will be exposed for usage in i.a.:
@@ -674,13 +678,13 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   The application has:
   - _ℹ Awareness_:
-    - **Static**: can query Resource metadata without reliance on external logic
-    - **Dynamic**: can query Resource metadata only when declared by external logic
-    - **Content**: can query the Resource content, stored in a separate file
+    - **Static**: can query Resource metadata by their declarations, without reliance on external logic
+    - **Dynamic**: can query Resource metadata following imperative operations (e.g. template execution)
+    - **Content**: can query the Resource content (stored in a separate file)
   - _🚥 Control_:
-    - **Placement**: can influence where the Resource is placed in the DOM
     - **Output**: can influence the HTML representing the Resource
     - **Path**: can influence the path to the Resource
+    - **Placement**: can influence where the Resource is placed in the DOM
 
   #### Asset Conditions
   The following types of Asset conditions can be identified:
@@ -713,8 +717,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   **Other** | Optional | ✅ Yes | ❌ No
 
   The missing coverage can be achieved through the consistent usage of the `asset_url()` Twig extension function in Templates (and equivalent resolution of Resource paths internally), which, in addition to returning the correct URLs depending on CDN settings during normal operation, may point selected requests to a PHP file that would return expected content from internal source files (when they cannot be accessed directly through HTTP), and provide signals to the application to check source files for changes, when in development mode.
-  
-  
+
 - ### In-Resource Data Access
   In addition to Resource management, the application and Plugins may need to pass data — that originates in PHP logic — for use in Resource logic.
   This may involve integration with closed systems (e.g. Twig & _scssphp_, where variables need to be declared explicitly — as opposed to `eval()` rendering), or exposing it to upper levels of the solution stack (e.g. CSS & JavaScript) through adequate techniques.
@@ -737,11 +740,11 @@ Changes that result in Theme resources being modified are defined Static Macros.
    * Passes variables to Resources - globally for a given Resource type, or for specified Resource(s) only.
    *
    * @param VariableScope|string[]|string $scope
-   * @param array<string,string> $data
+   * @param array<string, scalar> $data
    */
-  function pass($scope, $data): void;
+  function set($scope, array $data): void;
   ```
-  
+
   Additionally, the `asset()` Asset declaration function may be supplemented to simultaneously accept variables passed to declared Resources.
   
   #### Implementation References
@@ -763,7 +766,6 @@ Changes that result in Theme resources being modified are defined Static Macros.
     Defines metadata associated with an Extension. Expected to be compatible with the [composer.json schema](https://getcomposer.org/doc/04-schema.md#json-schema).
 
     Contains:
-    - **codename** (`codename`)
     - **title** (`extra.title`), a human-friendly name displayed in the UI
     - **description** (`description`)
     - **version** (`version`), compatible with PHP's [`version_compare()`](https://www.php.net/manual/en/function.version-compare.php)
@@ -799,9 +801,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
 - ### Resource Modification Functions
   Initially, a simple function corresponding to `find_replace_templatesets()` may be implemented to allow operations on Twig templates, possibly with better indication of errors (e.g. changes failing to apply).
 
-  With the implementation of Interface Macros, such functions will be deprecated.
+  With the implementation of View Macros, such functions will be deprecated.
 
-- ### Static Interface Macros
+- ### Static View Macros
 
   Template modification practices commonly known in MyBB ≤ 1.8 involve two sets of mirrored instructions: one to apply, and one to revert changes — usually executed during plugin installation (or reactivation) and uninstallation (or deactivation), respectively. This requires extension developers to maintain custom and repetitive logic for basic tasks.
 
@@ -948,9 +950,9 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   #### Instructions Format
 
-  A Macro definition will contain a set modification instructions, in a format suitable for safe storage and manual editing of front-end code (e.g. [JSON5](https://json5.org/)).
+  A Macro definition will contain a set of namespace modification instructions, in a format suitable for safe storage and manual editing of front-end code (e.g. [JSON5](https://json5.org/)).
   
-  Each instruction will identify one or more Resources by their path (in the [`<themelet-context-resource-path>`](#abnf) format), and information required to apply the instruction. The keys used in the data structure — indicating the instruction type, and specifying relevant literals and expressions — may be combined for brevity and developer convenience.
+  Each instruction will identify one or more Resources by their path (in the [`<resource-path-in-namespace>`](#abnf) format), and information required to apply the instruction. The keys used in the data structure — indicating the instruction type, and specifying relevant literals and expressions — may be combined for brevity and developer convenience.
 
   See: [Examples — Interface Macro Definition](#interface-macro-definition)
 
@@ -962,7 +964,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
   - matching in-content marker literals according to external storage data — confirming their existence and validity — and comparing inserted content with externally-stored literals,
   - matching external storage data according to in-content marker literals to identify orphaned markers,
   - determining ranges of content sections from marker literals to check for potential overlapping,
-  - removing all content introduced by Macros in a temporary copy — leaving unaffected, original content — to test literal references,
+  - testing references for new Macros on original content (with content introduced by other Macros removed),
   - verifying language syntax appropriate for the modified Resource with the marker literals inserted,
   - removing marker literal comments for exposed Assets
 
@@ -985,7 +987,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
   Plugins will continue to be able to perform insert, removal, and modification operations on such Resource types programmatically, using existing functions and libraries. These types will not be supported for Themes, which can supply no executable code recognized by the system.
 
-- ### Directory Structure
+- <details><summary><h3>Directory Structure</h3></summary>
+
   #### Hierarchy Order
   - Namespaces, Resource Types
     - A. Namespace-first (e.g. `frontend/templates/member/index.twig`)
@@ -1010,8 +1013,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
   1. Extension Package
      - A. Extensions stored in directories referencing the Package Name (`<package-name>/`)
   1. Themelet Path
-     - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `interface/`) of Extension Directories
-     - B. Themelets of Plugins stored in standardized subdirectories (e.g. `interface/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
+     - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `view/`) of Extension Directories
+     - B. Themelets of Plugins stored in standardized subdirectories (e.g. `view/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
 
        **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
      - C. Themelets of all Extensions stored directly in Extension Directories
@@ -1032,12 +1035,15 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
          **✔ required** — all Resources expected to belong to a namespace
      - Plugins
+
        - Own Namespace
          - A. directory with the Themelet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
-         
-           **✔ preferred** — own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace
+
+           _own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace_
          - B. Themelet targeting the Plugin's own namespace stored directly in the Themelet directory
-       - Other Namespaces
+
+           **✔ preferred** — only own namespaces allowed; simple layout
+       - ~~Other Namespaces~~
          - A. directories with Themelets targeting other Plugins' namespaces stored directly in the Themelet directory (e.g. `{namespace}/`)
 
            **✔ preferred** — directory on the same level as own namespace directory
@@ -1052,6 +1058,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
      - A. Resources collected into a Type stored in directories identifying Type names (e.g. `templates/`)
   1. Resource Group
      - A. Resources collected into a Group stored in directories identifying Group names (e.g. `showthread/`)
+  </details>
 
 - ### Naming
   - **Theme Packages**
@@ -1060,6 +1067,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
     - system (using reserved static names, e.g. `core` or `core.default`)
     - instance-limited packages (using reserved, codename-incompatible format, referencing an internal ID, e.g. `theme.{id}` for Board Themes)
     - distributable packages (using the codename format enforced by the Extend platform: `[a-z_]+`)
+
   - **Namespaces**
     - Generic Namespaces: `{name}` (`[a-z_]+`)
     - Extension Namespaces: `ext.{codename}`
@@ -1080,68 +1088,18 @@ Changes that result in Theme resources being modified are defined Static Macros.
       "templates": {
           "group/name.twig": {
               "last_modified": 123456789,
-              "parents": [
-                  "core@v1.9.1",
-                  "original_theme@v2",
-                  "theme.1@123456789"
-              ]
-          }
-      }
-  }
-  ```
-
-- #### Template Source Directory List Population
-  A function adding template paths of the core and extensions to Twig's Filesystem Loader. Assumes usage of separate namespaces for Extensions.
-  
-  ```php
-  function addTwigTemplatePaths(\Twig\Loader\FilesystemLoader $loader): void
-  {
-      // add sources, starting at the beginning of the inheritance chain
-  
-      // add core theme's templates
-      $loader->prependPath(
-          path: $coreTheme->getTemplatePath(),
-      );
-  
-      // add plugins' templates
-      foreach ($activePlugins as $plugin) {
-          // add plugin's templates to its own namespace
-          $loader->prependPath(
-              path: $plugin->getTemplatePath(),
-              namespace: $plugin->getCodename(),
-          );
-  
-          // add other extensions' templates for the plugin's namespace
-          foreach ($extensions as $extension) {
-              if (
-                  $extension->getType() !== ExtensionSystem::THEME_TYPE_CORE &&
-                  $extension->getCodename() !== $plugin->getCodename()
-              ) {
-                  $loader->prependPath(
-                      path: $plugin->getExtensionTemplatePath($plugin->getCodename()),
-                      namespace: $plugin->getCodename(),
-                  );
+              "inherits": {
+                  "core.base": "1.9.1",
+                  "original_theme": "2",
+                  "theme.1": "123456789",
               }
           }
       }
-  
-      // add theme ancestors' templates (from furthest to closest)
-      foreach ($theme->getAncestors() as $theme) {
-          if ($theme->getType() !== ExtensionSystem::THEME_TYPE_CORE) {
-              $loader->prependPath(
-                  path: $theme->getTemplatePath(),
-              );
-          }
-      }
-  
-      // add theme's own templates
-      $loader->prependPath(
-          path: $theme->getTemplatePath(),
-      );
   }
   ```
 
-- #### Themelet Source–Archive Synchronization
+- <details><summary><h4>Themelet Source–Archive Synchronization</h4></summary>
+
   ```php
   function checkExtensionArchive(\MyBB\Extension $extension): void
   {
@@ -1196,6 +1154,7 @@ Changes that result in Theme resources being modified are defined Static Macros.
       }
   }
   ```
+  </details>
 
 - #### Interface Macro Definition
   A Macro can be expressed in the JSON5 format, in a form similar to:
@@ -1218,8 +1177,8 @@ Changes that result in Theme resources being modified are defined Static Macros.
       },
   ]
   ```
+- <details><summary><h4>Resource Conflict Resolution</h4></summary>
 
-- #### Resource Conflict Resolution
   The `Text_Diff` third-party library already in use for MyBB 1.8 could be leveraged, in particular via its support for three-way diffs. It seems that it would need some modifications, but, generally, it could support the following implementation:
 
   > Two panes are presented side by side. The left pane shows the differences for each line between the original version of the resource and the newly released version of the resource (using the same formatting and styling as the current diffs for 1.8). The right pane shows the differences for each line between the original version of the resource and the current board version, including any updates made to the current board version by plugins or the admin. A third pane is presented below those two, with the suggested updates and resolution of conflicts. The UI presents a means of selecting, for each line in the top two panes, between the left and the right pane. Where conflicts require manual resolution, that selection is disabled, and in the third pane below, the usual style to indicate that manual resolution is required would be displayed:
@@ -1233,13 +1192,14 @@ Changes that result in Theme resources being modified are defined Static Macros.
   ```
 
   More sophisticated means of automated resolution of otherwise manual conflicts could be developed.
+  </details>
 
 - #### Theme System Directory Tree
   The following is an example of a partial directory tree related to the Theme System, featuring the internal Themelet cache and source files of:
 
   - Core Theme `core.default`, contributing to namespaces `frontend` and `parser`
   - Core Theme `core.acp`, contributing to namespace `acp`
-  - Plugin `plugin_a`, contributing to its own namespace, and that of Plugin `plugin_b`
+  - Plugin `plugin_a`, contributing to its own namespace, and supplying Macros
   - Theme `theme_a`, contributing to namespace `frontend`, and that of Plugin `plugin_b`
 
   ```
@@ -1254,23 +1214,22 @@ Changes that result in Theme resources being modified are defined Static Macros.
   │       │   └── 1.9.1/
   │       ├── plugin_a/
   │       │   └── 1.2.3/
-  │       ├── plugin_b/
-  │       │   └── 4.5.6/
   │       └── theme_a/
   │           └── 7.8.9/
   └── inc/
       ├── plugins/
       │   └── plugin_a/
-      │       └── interface/
-      │           ├── ext/
-      │           │   ├── images/
-      │           │   ├── scripts/
-      │           │   ├── styles/
-      │           │   ├── templates/
-      │           │   └── resources.json
-      │           └── ext.plugin_b/
-      │               ├── templates/
-      │               └── resources.json
+      │       ├── view/
+      │       │   ├── images/
+      │       │   ├── scripts/
+      │       │   ├── styles/
+      │       │   ├── templates/
+      │       │   └── resources.json
+      │       └── view-macros/
+      │           ├── frontend/
+      │           │   ├── links.json
+      │           │   └── widget.json
+      │           └── acp.json
       └── themes/
           ├── core.default/
           │   ├── frontend/
@@ -1317,10 +1276,10 @@ Changes that result in Theme resources being modified are defined Static Macros.
    - basic Theme Resource modification functions for Extensions
    - ACP Template & stylesheet editing
 1. Theme System Improvements
-   - Interface Macro API, Static Interface Macros
+   - View Macro API, Static View Macros
    - ACP UI for customizing values of CSS/SCSS variables
 1. Advanced Theme System Features
-   - Dynamic Interface Macros
+   - Dynamic View Macros
    - Themelet archiving system
    - Storing history of manual and automated changes to Resources
 1. Extension System Improvements
@@ -1364,22 +1323,28 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
 *interface*
 
-- **[Interface] Resource Namespace**, `<resource-namespace>` — the primary Resource organization unit
+- **Resource Namespace**, `<resource-namespace>` — the primary Resource organization unit
   - **Generic Namespace** — a Namespace containing Resources for a particular interface (e.g. front-end, ACP, email message, etc.)
   - **Extension Namespace** — a Plugin-specific Namespace
-- **[Interface] Resource Type**, `<resource-type>` — a classification of Resources according to method of execution or interpretation
+- **[View] Resource Type**, `<resource-type>` — a classification of Resources according to method of execution or interpretation
   - **Template** — code interpreted by a template engine
     - **PHP Template** — a MyBB 1.8-style Template interpreted using `eval()` statements
     - **Twig Template** — a MyBB 1.9-style Template interpreted by Twig
   - **Asset** — content and files intended to be exposed though HTTP
-- **[Interface] Resource Group** — an organization unit for Resources of the same Type
-- **[Interface] Resource** — an interface-related file intended to be processed or exposed through HTTP
-  - **[Interface] Resource Property** — data associated with a Resource (e.g. pages to which a stylesheet is attached)
+    - **Asset Property** — data associated with an Asset (e.g. pages to which a stylesheet is attached)
+- **[View] Resource Group** — an organization unit for Resources of the same Type
+- **[View] Resource** — an interface-related file intended to be processed or exposed through HTTP
+  - **[View] Resource Property** — data associated with a Resource
+
+- **Absolute Resource Path**, `<absolute-resource-path>` — a filesystem path to a Resource file
+- **Themelet [Context] Locator**, `<themelet-locator>` — a path to a Resource, referencing the Type, Group, Filename and, optionally, the Namespace; the default Namespace is provided implicitly by the usage context
+- **Resource [Context] Locator**, `<resource-context-locator>` — a path to a Resource, referencing the Group, Filename and, optionally, the Namespace; the Type, and default Namespace, is provided implicitly by the usage context
 
 *theme system*
 
-- **Themelet** — a collection of Interface Resources with their Properties
-- **[Interface] Resource Properties File** — a `resources.json` file in JSON format containing Resource Properties (see `<resource-properties-file-path>`)
+- **Themelet** — a collection of View Resources with their Properties
+- **Resource Properties File** — a `resources.json` file in JSON format containing Resource Properties (see `<resource-properties-file-path>`)
+- **Asset Properties File** — an `assets.json` file in JSON format containing Asset Properties (see `<asset-properties-file-path>`)
 - **Themelet Directory** — a directory containing Themelet files (see `<themelet-directory-path>`)
 - **Themelet Inheritance Chain** — an ordered list of Extensions, according to which a final Themelet is resolved, where priority is defined by the number of steps away from the end of the chain
 - **Themelet Inheritance Base** — Themelet of the Core Theme and Plugin Themelets of active Plugins
@@ -1394,26 +1359,28 @@ Changes that result in Theme resources being modified are defined Static Macros.
 
 *plugin interface*
 
-- **Plugin Interface** — interface-related data supplied by a Plugin
+- **Plugin View** — interface-related data supplied by a Plugin
   - **Plugin Themelet** — a Themelet supplied by a Plugin
   - **Plugin Interface Macro** — an Interface Macro supplied by a Plugin
 - **[Plugin Interface] Macro Directory** — a directory containing Macro Files in subdirectories that may reference targeted Extensions' Package names (see `<plugin-macro-directory-path>`)
 - **[Plugin Interface] Macro File** — a file defining a Plugin Interface Macro, located in the Plugin Interface Macro Directory (see `<plugin-macro-file-path>`)
-- **Plugin Interface Directory** — a directory containing Plugin Interface files (see `<plugin-interface-directory-path>`)
+- **Plugin View Directory** — a directory containing Plugin View files (see `<plugin-view-directory-path>`)
 
 
 ### [ABNF](https://datatracker.ietf.org/doc/html/rfc5234)
 ```abnf
 ; Theme System runtime references
-themelet-context-resource-path = ["@" resource-namespace "/"] resource-type "/" resource-path
-themelet-type-context-resource-path = ["@" resource-namespace "/"] resource-path
+themelet-locator = ["@" resource-namespace "/"] resource-path-in-namespace
+resource-context-locator = ["@" resource-namespace "/"] resource-path
 
-; Interface Resources
+; View Resources
 resource-namespace           = 1*( a-z / "_" )           ; Generic Namespaces
                              / "ext." extension-codename ; Extension Namespaces
 resource-namespace-directory = resource-namespace ; explicit Namespace
                              / "ext"              ; implicit Namespace
-                             
+
+resource-path-in-namespace = resource-type "/" resource-path
+
 resource-type             = "images"
                           / "scripts"
                           / "styles"
@@ -1422,17 +1389,18 @@ resource-path             = [resource-group "/"] resource-filename
 resource-group            = 1*( a-z / "_" )
 resource-filename         = 1*VCHAR "." 1*VCHAR ; name.extension
 
-resource-path-in-themelet = resource-namespace-directory "/" resource-type "/" resource-path
+resource-path-in-themelet = resource-namespace-directory "/" resource-path-in-namespace
 absolute-resource-path    = <web-root-directory> "/" themelet-directory-path "/" resource-path-in-themelet
 
 resource-properties-file-path = themelet-directory-path "/" resource-namespace-directory "/resources.json"
+asset-properties-file-path = themelet-directory-path "/" resource-namespace-directory "/assets.json"
 
 ; Themelets
 themelet-directory-path   = themelet-source-path
                           / themelet-archive-path
 
-themelet-source-path      = theme-interface-directory-path  ; supplied a Theme
-                          / plugin-interface-directory-path ; supplied by a Plugin
+themelet-source-path      = theme-view-directory-path  ; supplied a Theme
+                          / plugin-view-directory-path ; supplied by a Plugin
 
 themelet-archive-path     = "data/themelets/" package-name "/" package-version
 
@@ -1440,14 +1408,14 @@ themelet-archive-path     = "data/themelets/" package-name "/" package-version
 plugins-directory-path    = "inc/plugins"
 themes-directory-path     = "inc/themes"
 
+extension-directory-path  = plugin-directory-path
+                          / theme-directory-path
+
 plugin-directory-path     = plugins-directory-path "/" plugin-package-name
 theme-directory-path      = themes-directory-path "/" theme-package-name
 
-plugin-interface-directory-path = plugin-directory-path "/interface"
-theme-interface-directory-path  = theme-directory-path
-
-extension-directory-path  = plugin-directory-path
-                          / theme-directory-path
+plugin-view-directory-path = plugin-directory-path "/view"
+theme-view-directory-path  = theme-directory-path
 
 extension-manifest-file-path   = extension-directory-path "/manifest.json"
 extension-properties-file-path = extension-directory-path "/properties.json"
