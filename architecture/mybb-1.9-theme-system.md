@@ -964,6 +964,8 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
   Additionally, the `asset()` Asset declaration function may be supplemented to simultaneously accept variables passed to declared Resources.
   
+  See: [Naming](#naming) — Variable Sharing Helper Function
+
   #### Implementation References
   - Twig
     - Global variables
@@ -1389,6 +1391,19 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
     Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
     E.g. CSS files are placed in `styles/`, instead of `css/` or `stylesheets/`, as the directory may also contain SCSS files.
+
+  - **Variable Sharing Helper Function**
+
+    The `set` keyword was selected for the [helper function](#in-resource-data-access) basing on the following criteria:
+    - short,
+    - semantic equivalence to [Twig's `{{ set }}` block](https://twig.symfony.com/doc/3.x/tags/set.html),
+    - easy typing with left hand,
+    - no signal on future reservation as a PHP keyword (related: [PHP RFC: Property hooks](https://wiki.php.net/rfc/property-hooks)).
+
+    Other considered options include:
+    - `pass` (less clear; longer; more difficult to type)
+    - `share` (longer)
+    - `var` (proposed as a keyword in a [draft PHP RFC](https://wiki.php.net/rfc/declare_vars))
 
   - **Macro Operations**
     - `in` (short)
