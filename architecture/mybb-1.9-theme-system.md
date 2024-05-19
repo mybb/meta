@@ -779,6 +779,96 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - Plugin code,
   - Twig Templates.
 
+  <br>
+
+  **Diagram: Asset Publishing and Management**
+
+  ```mermaid
+  flowchart BT
+
+      subgraph Themelet
+          HierarchicalThemelet{{Hierarchical Themelet}}:::abstract
+          HierarchicalThemelet:::themelet
+
+          PublicationDirectives[/Publication Directives/]:::metadata
+          PublicationDirectives---HierarchicalThemelet
+          
+          Resources[Resources]:::resource
+          Resources---HierarchicalThemelet
+
+          PublishableResources[Publishable Resources]:::abstract
+          PublishableResources:::resource
+          PublishableResources-->Resources
+
+          AttachDirectives[/Asset Attaching Directives/]:::metadata
+          AttachDirectives---HierarchicalThemelet
+      end
+
+      subgraph Asset Management
+          UnmanagedAssets[Unmanaged Assets]:::unmanagedAsset
+
+          subgraph AssetPublishing["Asset Publishing"]
+              ExplicitSources[Explicitly Published]:::abstract
+              ExplicitSources:::resource
+              ExplicitSources-->PublishableResources
+
+              ImplicitSources[Implicitly Published]:::abstract
+              ImplicitSources:::resource
+              ImplicitSources-->PublishableResources
+
+              ConvertedResources[Converted Resources]:::convertedResource
+              ConvertedResources-->ExplicitSources
+
+              ProcessedResources[Processed Resources]:::processedResource
+              ProcessedResources-->ConvertedResources
+              ProcessedResources-->ImplicitSources
+
+              ThemeletAssets[Published Themelet Assets]:::themeletAsset
+              ThemeletAssets-->ProcessedResources
+          end
+
+          AssetPublishing-.->PublicationDirectives
+
+          PublishedAssets[Published Assets]:::abstract
+          PublishedAssets:::asset
+          PublishedAssets-->ThemeletAssets
+          PublishedAssets-->UnmanagedAssets
+          AttachDirectives-.->PublishedAssets
+
+          AssetCall[["asset()"]]:::subroutine
+          AssetCall-->PublishedAssets
+
+          AssetUrlCall[["asset_url()"]]:::subroutine
+          AssetUrlCall-->PublishedAssets
+
+          AttachedAssets[Attached Assets]:::asset
+          AttachedAssets-->AttachDirectives
+          AttachedAssets-->AssetCall
+
+          EmbeddedAssets[Embedded Assets]:::asset
+          EmbeddedAssets:::abstract
+          EmbeddedAssets-->AssetCall
+          EmbeddedAssets-->AssetUrlCall
+      end
+
+      HttpResponse([HTTP Response])
+      HttpResponse-->AttachedAssets
+      HttpResponse-->EmbeddedAssets
+
+      classDef abstract stroke-dasharray:5 5
+      classDef asset fill:seagreen,color:white
+      classDef unmanagedAsset fill:white,color:black
+      classDef metadata stroke:salmon,color:salmon
+      classDef resource fill:purple,color:white
+      classDef convertedResource fill:indigo
+      classDef processedResource fill:royalblue,color:white
+      classDef subroutine fill:black,font-family:monospace
+      classDef themelet stroke:hotpink,color:hotpink
+      classDef themeletAsset fill:teal,color:white
+  ```
+
+  <br>
+
   #### Centralized Asset Control Features
   Depending on the method of Asset declaration, the application may be simultaneously provided with information related to Resource usage, as well as control of certain inclusion method aspects.
   
