@@ -222,24 +222,72 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - A **Board Theme** may inherit and override Resources from Plugin Themelets and all parent Themes.
   
   <br>
-  
-  **Table: Extensions' Ability to Affect Resources**
-  
-  Acting Extension and Method \ Target | A Theme's Themelet | A Theme's Resources in a Plugin's Namespace | A Plugin's Themelet | A Plugin's Resources in another Plugin's Namespace | A Plugin's Function/Macro
-  --|:--:|:--:|:--:|:--:|:--:
-  Theme — through inheritance | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No
-  Plugin — through Inheritance | ❌ No | ❌ No | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach) | ❌ No / ➕ Add only / ✅ Yes (depending on chosen approach) | ❌ No
-  Plugin — through Function/Macro | ✅ Yes | ✅ Yes | ❌ No / ✅ Yes (depending on chosen approach) | ❌ No / ✅ Yes (depending on chosen approach) | ❌ No
 
-  - **Themes**:
-    - can override Resources of Plugins and parent Themes using inheritance,
-    - cannot supply their own Macros.
-  - **Plugins**:
-    - cannot override Theme Resources using inheritance (Plugins' Resources are part of the inheritance base),
-    - can use Functions/Macros to modify Board Themes.
-  - **Function/Macro** definitions cannot be influenced externally.
+- ### Hierarchical Versioning
+
+  Inheritance defined at the Themelet level (in Extension manifest files) may be accompanied by versions, declaring compatibility with specific states of ancestors. Nodes may list ancestors other than their parent to declare compatibility with specific versions, acknowledging upstream changes that were not applied to parents (e.g. out-of-band security updates in Core Themes not yet propagated in used third-party Original Themes). Otherwise, compatibility information is inherited, with closer ancestors having precedence.
+
+  Further, compatibility may be declared at the Resource level. To enable authoring tools to identify individual Resources in need of updating, it's necessary to determine whether the new upstream state differs from the state declared as compatible. While the burden of maintaining information about ancestors is more clear to downstream authors of hierarchical Themelets, the possibility and character of such declarations depend on available metadata published in ancestor Themelets. 
+
+  **Versions** accompanying Resources, intended to trail the containing Themelets' versions and be updated whenever the Resources themselves are updated — resulting in conveying Themelet versions in which they were last modified — are considered to carry the most extractable information, while making it easier for humans to understand the relationship, given the explicit versioning scheme.
+
+  Alternatively, **checksums** — correlating content more directly — allow linking upstream state, yielding information limited to a true/false compatibility status when compared with new upstream content.
+
+  The **Themelet version** may be a fallback comparison target for Resource-level references that cannot be matched against individual Resources upstream, with limited usability (e.g. marking individual Resources as compatible when applying updates, until all Resource updates are propagated), as the declared upstream state is not available for comparison. Assigning ancestor versions to all Resources in this fashion is equivalent to a single, Themelet-level declaration.
+
+  Finally, **Themelet Archiving** features may opportunistically provide usable information about the declared state, provided that the referenced version of the ancestor is present in archives (using older versions may produce false positives). While such data may be extensive, it may be impractical to provide or verify their exhaustiveness to produce additional information (e.g. version of last change).
+
+  <br>
+
+  **Table: Resource Compatibility Detection Methods**
+  Local Reference Type | Comparison | Comparison Target | Upstream Requirements | Local Requirements | Status Information | History Information
+  -|-|-|-|-|-|-
+  **Version** | direct | **Resource** (metadata) | Resource versions | - | ✅ Yes | ✅ Yes
+  **Checksum** | local value to target derivative | **Resource** (content) | - | - | ✅ Yes | ❌ No
+  **Version** | direct | **Themelet** (metadata) | Themelet versions | - | ⚠️ Limited | ❌ No
+  **Version** | local archived upstream content to target | **Resource** (content) | Themelet versions | Themelet archive | ✅ Yes | ⚠️ Limited
+
+  <br>
+
+  File modification time is considered unreliable as a declarative source due to volatility related to manual and automated Package- and Resource-level operations, but may be used as an auxiliary factor in authoring tools.
+
+  Therefore, general recommendations for optimal developer experience include:
+  - declaring versions for Themelets (effectively fulfilled through Extension versions),
+  - declaring versions for Resources in distributed Extensions,
+  - limiting compatibility declarations to the closest ancestor (parent) and its version, when possible.
+
+  Tools dedicated to handling compatibility operations may use the resulting available data by:
+  - identifying precise causes of mismatches (which may stem from i.a. creating, deleting, and modifying Resources upstream),
+  - integrating with Themelet Archiving features to provide context information,
+  - offering and recommending solutions (i.a. propagating changes, correcting compatibility declarations, managing disinheritance),
+  - improving present or future compatibility checks by surfacing declarations that are invalid, ineffective, redundant, suboptimal, or conflicting.
+
+  See: [Examples — Resource Compatibility Detection](#resource-compatibility-detection)
+
+  Notably, this design relies on observing specific snapshots of an Extension release history, which is assumed to not receive retroactive changes. Unless the histories are complete (e.g. using data from Extend, and assuming that all versions are published on the platform), more advanced interpretation tools may miss relevant events (e.g. a Resource file later deleted and then re-created likely involves semantically distinct Resources with coinciding names).
+
+  #### Upstream Maintenance
+  The application's authoring tools may contain relevant aids to write accompanying metadata according to established best practices — in real time when editing using the ACP, or when triggered to account for external changes to Resource files.
+
+  The upstream versioning burden has an increased impact for Extensions developed with limited interaction with the application's built-in tools, or published using external procedures or scripts (including core Extensions developed in parallel with the application itself), as it's desirable to reduce manual version management (which may lead to human errors), and for any version stored in a code repository to accurately represent the development state.
   
-- ### Resource Versioning
+  One of the workflows addressing this problem relies on:
+  - editing Resource files freely,
+  - not adding Resource-level versions to the repository,
+  - creating tags for repository states corresponding to released versions,
+  - generating/adding Resource versions in build tools, resulting in the versions being present in production Packages.
+
+  In such a scheme using git, the necessary version information for each Resource `<file>` can be then established according to the version tag in which it was modified, using a command similar to:
+
+  ```sh
+  $ git describe --contains --match="v*" $(git rev-list --max-count=1 main <file>)
+  ```
+
+  Common related tooling may be published for use by developers of the application and Extensions (e.g. as _GitHub Actions_).
+
+  As a side effect, this approach would result in missing version information for Extensions downloaded directly from the repository (including development copies, which may be used by downstream authors). However, the checksum fallback would likely embed satisfactory information in Themelets maintained using such upstream copies, and the authoring tools can offer to normalize such declarations by replacing them with version references once a production version of the ancestor is introduced to the application.
+
+- ### Themelet Versioning
   Resource inheritance and dependencies between Extensions will rely on references similar to those used by software package managers, allowing Extension developers and administrators to lock them down to specific versions for stability purposes. These references can link:
   
   - runtime implementations with Packages (e.g. the forum default Theme pointing to a Package directory in the filesystem — using values of the `package` and `version` columns in the `mybb_themes` table),
@@ -1392,6 +1440,37 @@ Changes that result in the modification of Theme resources are defined as _Stati
     Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
     E.g. CSS files are placed in `styles/`, instead of `css/` or `stylesheets/`, as the directory may also contain SCSS files.
 
+  - **Hierarchical References**
+
+    The status or list of ancestors is accepted using a single key `inherits` of type `{boolean|list<string>|object<string, string|object>}`, used for:
+    - using default inheritance (`{true}`),
+    - disinheriting Resources (`{false}`),
+    - listing ancestor packages without additional information (`{list<string>}`),
+    - listing ancestor packages with version-related constraints (`{object<string, string>}`),
+    - listing ancestor packages with additional data (`{object<string, object>}`).
+
+    Included ancestors are listed by proximity to the node in ascending order, resembling hierarchical order from the root to the end node.
+
+    Examples:
+    ```json
+    "inherits": [
+      "core.base",
+      "my-theme"
+    ]
+    ```
+    ```json
+    "inherits": {
+      "core.base": "1.2.3", // version
+      "my-theme": "", // no constraints
+      "original-theme": { lastModified: 1234567890 }
+    }
+    ```
+
+    The merged structure can be used to:
+    - identify the parent,
+    - store data related to ancestor packages present in parent chains (without affecting the chain when using deep-first, defined-order algorithms to build the chain, as long as the list's order is normalized),
+    - prepend ancestor chains.
+
   - **Variable Sharing Helper Function**
 
     The `set` keyword was selected for the [helper function](#in-resource-data-access) basing on the following criteria:
@@ -1504,8 +1583,270 @@ Changes that result in the modification of Theme resources are defined as _Stati
   ```
   </details>
 
+- <details><summary><h4>Resource Compatibility Detection</h4></summary>
 
+  `class Resource`
+  ```php
+  /**
+   * Returns the Themelet version in which the Resource was last modified.
+   */
+  function getVersion(Resource $resource): ?string
+  {
+      return $resource->getProperty('version');
+  }
+
+  /**
+   * Yields Problems relating to compatibility with Resource's ancestors.
+   *
+   * @return iterable<Problem>
+   * @note Ignores issues not related to the Resource and its Themelet.
+   */
+  function compatibilityProblems(): iterable
+  {
+      if ($this->inherited()) {
+          if ($this->existsInThemelet()) {
+              if (!$this->contentDiffersFromClosestAncestor()) {
+                  yield NormalizationProblem::REDUNDANT_OVERRIDE;
+              }
+  
+              // compare Resource compatibility declarations to ancestry established in the Themelet
+              if (array_diff($this->getAncestryDeclarations(), $this->getAncestry()) {
+                  yield NormalizationProblem::DECLARATION_OF_ANCESTORS_UNKNOWN_TO_THEMELET;
+              }
+  
+              $intermediateAncestors = []; // ordered from closest
+              $compatibleAncestors = [];
+  
+              foreach ($this->getAncestry() as $ancestor => $declaration) { // ordered from closest
+                  $themeletDeclaration = $this->getThemelet()->getAncestryDeclarations()[$ancestor->getThemelet()];
+  
+                  if (
+                      $ancestor->getVersion() !== null &&
+                      $themeletDeclaration['version'] !== null &&
+                      version_compare($ancestor->getVersion(), $themeletDeclaration['version'], '>')
+                  ) {
+                      /*
+                       * Using incorrectly-defined, future version of ancestor
+                       * may result in incorrect suppression of changes made at the specified version
+                       */
+                      yield FutureProblem::ANCESTOR_PACKAGE_VERSIONING;
+                  }
+  
+                  if (
+                      $declaration['checksum'] !== null &&
+                      $ancestor->getVersion() !== null
+                  ) {
+                      // version-based declaration is preferred
+  
+                      if ($declaration['version'] === null) {
+                          yield NormalizationProblem::VERSION_DECLARATION_POSSIBLE;
+                      } else {
+                          yield NormalizationProblem::REDUNDANT_CHECKSUM;
+                      }
+                  }
+  
+                  // compatibility status according to own declaration
+                  [$directCompatibility, $directCompatibilityLevel] = $this->declaredCompatibleWithAncestor($ancestor);
+  
+                  // compatibility status according to declarations in intermediate ancestors
+                  /*
+                   * Including information from possibly incompatible ancestors will exclude upstream-only issues,
+                   * resolvable by propagating changes from closer ancestors
+                   */
+                  [$indirectCompatibility, $indirectCompatibilityLevel] = Resource::descendantsDeclaredCompatibleWith(
+                      $intermediateAncestors,
+                      $ancestor,
+                  );
+  
+  
+                  if (
+                      $directCompatibility === false &&
+                      $indirectCompatibility === true &&
+                      array_intersect($intermediateAncestors, $compatibleAncestors)
+                  ) {
+                      /*
+                       * Declared incompatible with ancestors of parent (which was declared as compatible)
+                       */
+                      yield NormalizationProblem::CONFLICTING_EFFECTIVE_DECLARATIONS;
+                  }
+  
+                  if (
+                      $directCompatibilityLevel < Level::RESOURCE &&
+                      $indirectCompatibilityLevel < Level::RESOURCE
+                  ) {
+                      /*
+                       * Future changes may be unnecessarily surfaced for review without Themelet Archives
+                       */
+                      yield FutureProblem::NO_RESOURCE_LEVEL_VERSION_DECLARATION;
+  
+                      if (
+                          $directCompatibilityLevel < Level::THEMELET &&
+                          $indirectCompatibilityLevel < Level::THEMELET
+                      ) {
+                          /*
+                           * Changes may be unnecessarily surfaced for review without Themelet Archives
+                           */
+                          yield FutureProblem::NO_THEMELET_LEVEL_VERSION_DECLARATION;
+                      }
+                  }
+  
+                  if (
+                      $directCompatibilityLevel === Level::RESOURCE &&
+                      $indirectCompatibilityLevel === Level::RESOURCE
+                  ) {
+                      yield NormalizationProblem::REDUNDANT_DECLARATION;
+                  }
+  
+                  foreach ([
+                      $directCompatibility,
+                      $indirectCompatibility,
+                      VersionProblem::ANCESTOR_UPDATE_NOT_PROPAGATED | VersionProblem::ANCESTOR_PACKAGE_OUTDATED,
+                  ] as $result) {
+                      if ($result === true || is_int($result)) {
+                          if (is_int($result)) {
+                              yield $result;
+                          }
+                          
+                          break;
+                      }
+                  }
+  
+                  $intermediateAncestors[] = $ancestor;
+  
+                  if (($directCompatibility ?? $indirectCompatibility) === true) {
+                      $compatibleAncestors[] = $ancestor;
+                  }
+              }
+          }
+      } elseif ($this->getSpeculativeAncestors(levels: 1) === []) {
+          yield NormalizationProblem::REDUNDANT_INHERITANCE_DIRECTIVE;
+      }
+  }
+  
+  /**
+   * Returns the first determinable compatibility status of a list of descendants.
+   *
+   * Useful for determining compatibility state of intermediate ancestors with the target ancestor,
+   * where closer ancestors (and appearing earlier in `$descendants`) have precedence of compatibility declaration.
+   *
+   * @param Resource[] $descendants
+   * @return array{bool, Level}|array{null, null}
+   */
+  static function descendantsDeclaredCompatibleWith(array $descendants, Resource $resource): array
+  {
+      foreach ($descendants as $descendant) {
+          [$declared, $level] = $descendant->declaredCompatibleWithAncestor($resource);
+  
+          if ($declared !== null) {
+              return [$declared, $level];
+          }
+      }
+  
+      return [null, null];
+  }
+  
+  
+  /**
+   * Determines whether the Resource is compatible with given ancestor.
+   * Does not take into account intermediate ancestors.
+   *
+   * @return array{bool, Level}|array{null, null}
+   */
+  function declaredCompatibleWithAncestor(Resource $ancestor): ?array
+  {
+      if ($this->inherited() && $this->existsInThemelet()) {
+          $declaration = $this->getAncestry($ancestor);
+  
+          $tests = [
+              [
+                  'level' => Level::RESOURCE,
+                  'callback' => $this->declaredCompatibleWithAncestorByVersion(...),
+              ],
+              [
+                  'level' => Level::RESOURCE,
+                  'callback' => $this->declaredCompatibleWithAncestorByChecksum(...),
+              ],
+  
+              // Themelet-level version compatibility declaration
+              // (Themelet-level discrepancies not related to the Resource handled at higher scope)
+              [
+                  'level' => Level::THEMELET,
+                  'callback' => $this->themeletDeclaredCompatibleWithAncestor(...),
+              ],
+  
+              // opportunistic observations of upstream changes
+              [
+                  'level' => Level::ARCHIVE,
+                  'callback' => $this->compatibleWithAncestorByContent(...),,
+              ],
+          ];
+  
+          foreach ($tests as $test) {
+              $result = $test['callback']();
+  
+              if ($result !== null) {
+                  return [$result, $test['level']];
+              }
+          }
+      }
+  
+      return [null, null];
+  }
+  
+  function declaredCompatibleWithAncestorByVersion(Resource $ancestor): null|true|Problem
+  {
+      $declaration = $this->getAncestry($ancestor);
+  
+      if ($declaration['version'] !== null && $ancestor->getVersion() !== null) {
+          return match (version_compare($ancestor->getVersion(), $declaration['version'])) {
+              -1 => VersionProblem::ANCESTOR_PACKAGE_OUTDATED,
+              1 => VersionProblem::ANCESTOR_UPDATE_NOT_PROPAGATED,
+              0 => true,
+          };
+      }
+  
+      return null;
+  }
+  
+  function declaredCompatibleWithAncestorByChecksum(Resource $ancestor): ?bool
+  {
+      $declaration = $this->getAncestry($ancestor);
+  
+      if ($declaration['checksum'] !== null && $ancestor->existsInThemelet()) {
+          return $ancestor->getContentChecksum() === $declaration['checksum'];
+      }
+  
+      return null;
+  }
+  
+  function compatibleWithAncestorByContent(Resource $ancestor): ?bool
+  {
+      $declaration = $this->getAncestry($ancestor);
+  
+      if ($declaration['version'] !== null) {
+          return $ancestor->contentEqualToVersion($declaration['version']);
+      } else {
+          return null;
+      }
+  }
+  
+  function contentEqualToVersion(string $version): ?bool
+  {
+      if (ThemeletArchive::has($this->getThemelet(), $version)) {
+          $versionResource = ThemeletArchive::get($this->getThemelet(), $version)
+              ?->getResource($this->getLocator());
+  
+          return (
+              $versionResource &&
+              $this->getContent() === $versionResource->getContent()
+          );
+      } else {
+          return null;
+      }
+  }
   ```
+  </details>
+
 - <details><summary><h4>Resource Conflict Resolution</h4></summary>
 
   The `Text_Diff` third-party library already in use for MyBB 1.8 could be leveraged, in particular via its support for three-way diffs. It seems that it would need some modifications, but, generally, it could support the following implementation:
