@@ -1204,6 +1204,54 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
   Plugins will continue to be able to perform insert, removal, and modification operations on such Resource types programmatically, using existing functions and libraries. These types will not be supported for Themes, which can supply no executable code recognized by the system.
 
+- ### Controls
+  The ACP will include tools related to production usage, extension authoring, and application development. Notably, Plugin management will overlap with the View domain.
+
+  <br>
+
+  **Diagram: Types of Controls in the View Domain**
+  ```mermaid
+  mindmap
+    ((View UX))
+      )Usage(
+        Themes
+          Package listing
+            Dependencies
+          Active Themes
+            Default Theme
+          Theme Properties
+          Legacy Resources listing
+        ["Editing (_Board_)"]
+          History view
+          Ancestors listing
+        Macros
+          Registered Macros
+          Custom Macros
+          Apply/Revert
+          ["Plugin (un)installation"]
+        Publication settings
+          Minification
+          Caching/busting
+          CDN
+      )Authoring(
+        ["Editing (Extensions)"]
+        Runtime overrides
+          Minification
+          Caching/busting
+        Compatibility
+          Inheritance Chain view
+          Status
+          Content Comparison
+          Change Propagation
+          Declarations management
+        Packaging
+          Normalization
+          Metadata management
+          Exporting
+      )Development(
+        ["Editing (_Core_)"]
+  ```
+
 - <details><summary><h3>Directory Structure</h3></summary>
 
   #### Hierarchy Order
