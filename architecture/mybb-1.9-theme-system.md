@@ -161,8 +161,49 @@ Changes that result in the modification of Theme resources are defined as _Stati
   <br>
   
   **Diagram: View Resource Inheritance Overview**
+
+  ```mermaid
+  flowchart RL
+      subgraph ThemesGraph[Themes]
+          CoreTheme[Core Theme]
   
-  ![interface-resource-inheritance-overview](https://user-images.githubusercontent.com/8020837/143784234-2915089c-6f8c-48a1-ad83-e8e57f75dee0.png)
+          OriginalTheme[Original Theme]
+          OriginalTheme--may inherit from same or higher types-->CoreTheme
+  
+          BoardTheme[Board Theme]
+          BoardTheme--may inherit from same or higher types-->OriginalTheme
+  
+          style CoreTheme fill:#f2f2f2,color:#000
+          style OriginalTheme fill:#cbc2d9,color:#000
+          style BoardTheme fill:#7d659e,color:#fff
+      end
+  
+      ThemesGraph--inherits from-->PluginThemelet
+      ThemesGraph-.installs changes from.->PluginMacro
+  
+      subgraph InheritanceBase[Inheritance Base]
+          subgraph PluginsGraph[Plugins]
+              PluginThemelet[Plugin Themelet]:::themelet
+              PluginThemelet---Plugin
+
+              PluginMacro[Macro]:::macro
+              PluginMacro---Plugin
+  
+              Plugin[Plugin]
+  
+              style Plugin fill:#e1711f
+          end
+      end
+  
+      HierarchicalThemelet{{Hierarchical Themelet}}:::abstract
+      HierarchicalThemelet:::themelet
+      HierarchicalThemelet--depends on-->ThemesGraph
+  
+  
+      classDef abstract stroke-dasharray:5 5
+      classDef macro stroke:gold,color:gold
+      classDef themelet stroke:hotpink,color:hotpink
+  ```
 
   <br>
   
@@ -605,10 +646,96 @@ Changes that result in the modification of Theme resources are defined as _Stati
   
   <br>
   
-  
-  ![registration-of-interface-resources-in-namespaces](https://user-images.githubusercontent.com/8020837/154743960-8bbf9759-2b50-4a35-b18b-a918c834e791.png)
-  
   **Diagram: Example Registration of View Resources in Namespaces (Lowest to Highest Priority)**
+
+  ```mermaid
+  block-beta
+    columns 4
+
+    block:Sources
+      columns 1
+      space
+      a1["1. Plugin A"]
+      space
+      a2["2. Plugin B"]
+      space
+      a3["3. Core Theme"]
+      space
+      a4["4. Theme A"]
+      space
+      a5["5. Theme B"]
+    end
+
+    block:GenericNamespace
+      columns 1
+      b0["Generic Namespace"]
+
+      space
+      space
+      space
+      space
+      b3("core.base/@frontend")
+      space
+      b4("theme-a/@frontend")
+      space
+      b5("theme-b/@frontend")
+
+      b5--"inherits from"-->b4
+      b4--"inherits from"-->b3
+    end
+
+    block:PluginANamespace
+      columns 1
+      c0["Plugin A's Namespace"]
+      
+      c1("plugin-a/view")
+      space
+      space
+      space
+      space
+      space
+      c4("theme-a/@plugin-a")
+      space
+      c5("theme-b/@plugin-a")
+
+      c5--"inherits from"-->c4
+      c4--"inherits from"-->c1
+    end
+
+    block:PluginBNamespace
+      columns 1
+      d0["Plugin B's Namespace"]
+
+      space
+      space
+      d2("plugin-b/view")
+      space
+      space
+      space
+      d4("theme-a/@plugin-b")
+      space
+      d5("theme-b/@plugin-b")
+
+      d5--"inherits from"-->d4
+      d4--"inherits from"-->d2
+    end
+  
+    classDef noframe stroke:none,fill:none
+    class Sources,a1,a2,a3,a4,a5 noframe
+    class b0 noframe
+    class c0 noframe
+    class d0 noframe
+
+    style GenericNamespace stroke:#7d649e
+    style b0 color:#7d649e
+
+    style PluginANamespace stroke:#e1711f
+    style c0 color:#e1711f
+
+    style PluginBNamespace stroke:#e1711f
+    style d0 color:#e1711f
+  ```
+
   <br>
 
 - ### Resource Groups
