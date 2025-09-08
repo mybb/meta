@@ -1160,11 +1160,11 @@ Changes that result in the modification of Theme resources are defined as _Stati
   
   macro-id                   = [macro-package-id "/"] macro-name
                              / macro-package-id
-  macro-package-id           = package-name ":" package-version
+  macro-package-id           = package-name
 
   macro-operation-id         = "#" 1*DIGIT "." 1*DIGIT
   
-  macro-marker-header        = [ macro-marker-header-delete ", " ] macro-marker-header-insert
+  macro-marker-header        = [ macro-marker-header-delete " " ] macro-marker-header-insert
                              / macro-marker-header-delete
   macro-marker-header-insert = "+"
   macro-marker-header-delete = "-" 1*DIGIT
@@ -1172,12 +1172,12 @@ Changes that result in the modification of Theme resources are defined as _Stati
   
   ##### Marker Literals — Example
   ```twig
-  {#~ hello_world:1.2.3 #1.1 + ~#}<added content>{#~ hello_world:1.2.3 #1.1 ~#}
+  {#~ hello_world #1.1 + ~#}<added content>{#~ hello_world #1.1 ~#}
   <unaffected content>
-  {#~ hello_world:1.2.3 #2.1 -19 ~#}
+  {#~ hello_world #2.1 -19 ~#}
   <unaffected content>
-  {#~ hello_world:1.2.3 #2.2 -19 ~#}
-  {#~ hello_world:1.2.3 #3.1 -13, + ~#}<new content>{#~ hello_world:1.2.3 #3.1 ~#}
+  {#~ hello_world #2.2 -19 ~#}
+  {#~ hello_world #3.1 -13 + ~#}<new content>{#~ hello_world #3.1 ~#}
   ```
 
   ##### Active Macro Data — Example
@@ -1225,11 +1225,10 @@ Changes that result in the modification of Theme resources are defined as _Stati
   Each instruction will identify one or more Resources by their path (in the [`<resource-path-in-namespace>`](#abnf) format), and information required to apply the instruction. The keys used in the data structure — indicating the instruction type, and specifying relevant literals and expressions — may be combined for brevity and developer convenience.
 
   The following set was selected for the listed operations, indicating the pattern to match (defaulting to all content), and the operation to perform with the provided string:
-  - `{string} find` (optional)
-  - `{string} prepend` / `{string} append` / `{string} set` (operation type; performed on the whole text or in relation to `find`)
-  - `{bool} pattern` (regular expressions, defaulting to `false`)
+  - `{string} find` / `{string} match` (optional)
+  - `{string} insertBefore` / `{string} insertAfter` / `{string} replace` (operation type; performed on the whole text or in relation to `find`)
 
-  Additionally, a key `{string} delete: ...` may be supported as a shorthand equivalent to { `find: ...`, `set ""` }.
+  Additionally, a key `{string} delete: ...` may be supported as a shorthand equivalent to { `find: ...`, `replace ""` }.
 
 
   See: [Naming](#naming) — Macro Operations
@@ -1239,18 +1238,18 @@ Changes that result in the modification of Theme resources are defined as _Stati
   ```json5
   [
       {
-          in: 'templates/examples/hello.twig',
-          set: 'Hello {{ username }}',
+          resource: 'templates/examples/hello.twig',
+          replace: 'Hello {{ username }}',
       },
       {
-          in: 'templates/index.twig',
+          resource: 'templates/index.twig',
           find: '<!-- end: navigation -->',
-          prepend: '<a href="custom_page.php">Custom Page</a>',
+          insertBefore: '<a href="custom_page.php">Custom Page</a>',
       },
       {
-          in: 'styles/page.css',
+          resource: 'styles/page.css',
           find: 'var(--original-color)',
-          set: 'var(--custom-color)',
+          replace: 'var(--custom-color)',
       },
   ]
   ```
@@ -1485,27 +1484,23 @@ Changes that result in the modification of Theme resources are defined as _Stati
     - `var` (proposed as a keyword in a [draft PHP RFC](https://wiki.php.net/rfc/declare_vars))
 
   - **Macro Operations**
-    - `in` (short)
-      
+    - `resource`
+
       Other considered options include:
-      - `resource` (long, unnecessarily more specific)
+      - `in` (ambiguous if support for other types of targets is added)
       - `file` (unnecessarily indicates storage method)
-
-    - `delete` (standardized verb for text operations)
-
-      Other considered options include:
-      - `remove`
 
     - `find` (common in step-by-step instructions for humans)
     
       Other considered options include:
       - `at` (confusing with `@` found in Resource locator)
       - `where`
-      - `match`
+      - `match` (may imply a regular expression is accepted)
 
-    - `prepend` / `append` (clear that the provided string will be inserted)
+    - `insertBefore` / `insertAfter` (has same meaning when operating on HTML nodes)
 
       Other considered options include:
+      - `prepend` / `append` (clear that the provided string will be inserted; has different meaning when operating on HTML nodes, may imply payload will be inserted as a child of found element)
       - `before` / `after` (may imply the content is a `find` reference)
 
 ## Examples
