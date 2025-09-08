@@ -15,7 +15,7 @@ cache/
     settings.php
 data/
     backups/
-    themelets/
+    viewlets/
     uploads/
     config.php
 ext/
@@ -46,7 +46,7 @@ vendor/
 │   └── settings.php
 ├── data/
 │   ├── backups/
-│   ├── themelets/
+│   ├── viewlets/
 │   ├── uploads/
 │   └── config.php
 ├── ext/

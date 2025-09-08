@@ -31,7 +31,7 @@ The content and metadata of Resources, and most of Theme-related information, wi
 
   Activated Themes will be tracked in the database table `mybb_themes`, and associated with a Package in the filesystem. These records will contain information specific to the individual forum installation, like permissions, customized title, or chosen color scheme, and will be referenced in other tables.
 
-#### Themelets
+#### Viewlets
 Features related to Themes have a significant overlap with Plugins, which can supply their own templates or stylesheets. The new system introduces a logical structure — common to both types — grouping Resources introduced by a single Extension by namespace and type, together with their metadata:
 
 ```
@@ -47,10 +47,10 @@ acp/
 
 The Extension System will process Resources contained in each active Extension's directory according to desired inheritance.
 
-Themelets are the foundation of Themes and interfaced Plugins, which can use the same location to provide additional theming files and directories interpreted by either the Theme or Plugin System.
+Viewlets are the foundation of Themes and interfaced Plugins, which can use the same location to provide additional theming files and directories interpreted by either the Theme or Plugin System.
 
 #### Version Data Retention
-Past versions of Themelets supplied by activated Extensions will be retained on update, enabling improved compatibility, comparison, and conflict resolution features.
+Past versions of Viewlets supplied by activated Extensions will be retained on update, enabling improved compatibility, comparison, and conflict resolution features.
 
 For example, after installing a Theme with version 1.0 and then uploading new versions 1.1 and 1.2, the templates, stylesheets, and other data for all three versions would be retained in the filesystem, and thus available for comparison — manual or automated — showing what changes need to be applied in child Themes.
 
@@ -70,7 +70,7 @@ The Extension System will internally use an additional type for third-party Them
 The remaining Themes — *Board Themes* — will function as the customization layer, and will be editable by Plugins and ACP tools.
 
 #### Theme Packages
-Theme files will be placed in `inc/themes/<package-name>/` directories referencing codenames or local identifiers, and implement the Themelet structure, additionally including a `properties.json` file with additional configuration and presets, and `manifest.json` with author information and metadata.
+Theme files will be placed in `inc/themes/<package-name>/` directories referencing codenames or local identifiers, and implement the Viewlet structure, additionally including a `properties.json` file with additional configuration and presets, and `manifest.json` with author information and metadata.
 
 #### Theme Activation
 Administrators will be able to activate Themes by selecting one of the Packages in the filesystem. Activated Themes will store values for supported configuration options defined in Packages (like color scheme choices).
@@ -81,7 +81,7 @@ The existing mechanism of propagating Template updates will be extended to cover
 ### Plugins
 
 #### Plugin Interfaces
-Plugins will use the universal Themelet structure under `view/` to supply own Resources, and contain modification instructions for individual Themes.
+Plugins will use the universal Viewlet structure under `view/` to supply own Resources, and contain modification instructions for individual Themes.
 
 Custom Resources will be added at the beginning of the inheritance chain, meaning that Themes will be able to override them to adjust Plugins visually.
 
@@ -178,13 +178,13 @@ Changes that result in the modification of Theme resources are defined as _Stati
           style BoardTheme fill:#7d659e,color:#fff
       end
   
-      ThemesGraph--inherits from-->PluginThemelet
+      ThemesGraph--inherits from-->PluginViewlet
       ThemesGraph-.installs changes from.->PluginMacro
   
       subgraph InheritanceBase[Inheritance Base]
           subgraph PluginsGraph[Plugins]
-              PluginThemelet[Plugin Themelet]:::themelet
-              PluginThemelet---Plugin
+              PluginViewlet[Plugin Viewlet]:::viewlet
+              PluginViewlet---Plugin
 
               PluginMacro[Macro]:::macro
               PluginMacro---Plugin
@@ -195,19 +195,19 @@ Changes that result in the modification of Theme resources are defined as _Stati
           end
       end
   
-      HierarchicalThemelet{{Hierarchical Themelet}}:::abstract
-      HierarchicalThemelet:::themelet
-      HierarchicalThemelet--depends on-->ThemesGraph
+      HierarchicalViewlet{{Hierarchical Viewlet}}:::abstract
+      HierarchicalViewlet:::viewlet
+      HierarchicalViewlet--depends on-->ThemesGraph
   
   
       classDef abstract stroke-dasharray:5 5
       classDef macro stroke:gold,color:gold
-      classDef themelet stroke:hotpink,color:hotpink
+      classDef viewlet stroke:hotpink,color:hotpink
   ```
 
   <br>
   
-  **Table: Themelets' Ability to Override Extension Resources**
+  **Table: Viewlets' Ability to Override Extension Resources**
   
   Acting Extension Type \ Target Type | Plugin | Core Theme | Original Theme | Board Theme
   :--:|:--:|:--:|:--:|:--:
@@ -217,25 +217,25 @@ Changes that result in the modification of Theme resources are defined as _Stati
   **Board Theme** | ✅ Yes | ✅ Yes | ✅ Yes (parents) | ✅ Yes (parents)
 
   - A **Plugin** may only supply own Resources that are prepended to the inheritance chain, which  permits undefined order of inclusion in the chain.
-  - A **Core Theme** may override Resources from parent Core Themes, or Plugin Themelets.
-  - An **Original Theme** may inherit and override Resources from the Core Theme, parent Original Themes, and Plugin Themelets.
-  - A **Board Theme** may inherit and override Resources from Plugin Themelets and all parent Themes.
+  - A **Core Theme** may override Resources from parent Core Themes, or Plugin Viewlets.
+  - An **Original Theme** may inherit and override Resources from the Core Theme, parent Original Themes, and Plugin Viewlets.
+  - A **Board Theme** may inherit and override Resources from Plugin Viewlets and all parent Themes.
   
   <br>
 
 - ### Hierarchical Versioning
 
-  Inheritance defined at the Themelet level (in Extension manifest files) may be accompanied by versions, declaring compatibility with specific states of ancestors. Nodes may list ancestors other than their parent to declare compatibility with specific versions, acknowledging upstream changes that were not applied to parents (e.g. out-of-band security updates in Core Themes not yet propagated in used third-party Original Themes). Otherwise, compatibility information is inherited, with closer ancestors having precedence.
+  Inheritance defined at the Viewlet level (in Extension manifest files) may be accompanied by versions, declaring compatibility with specific states of ancestors. Nodes may list ancestors other than their parent to declare compatibility with specific versions, acknowledging upstream changes that were not applied to parents (e.g. out-of-band security updates in Core Themes not yet propagated in used third-party Original Themes). Otherwise, compatibility information is inherited, with closer ancestors having precedence.
 
-  Further, compatibility may be declared at the Resource level. To enable authoring tools to identify individual Resources in need of updating, it's necessary to determine whether the new upstream state differs from the state declared as compatible. While the burden of maintaining information about ancestors is more clear to downstream authors of hierarchical Themelets, the possibility and character of such declarations depend on available metadata published in ancestor Themelets. 
+  Further, compatibility may be declared at the Resource level. To enable authoring tools to identify individual Resources in need of updating, it's necessary to determine whether the new upstream state differs from the state declared as compatible. While the burden of maintaining information about ancestors is more clear to downstream authors of hierarchical Viewlets, the possibility and character of such declarations depend on available metadata published in ancestor Viewlets. 
 
-  **Versions** accompanying Resources, intended to trail the containing Themelets' versions and be updated whenever the Resources themselves are updated — resulting in conveying Themelet versions in which they were last modified — are considered to carry the most extractable information, while making it easier for humans to understand the relationship, given the explicit versioning scheme.
+  **Versions** accompanying Resources, intended to trail the containing Viewlets' versions and be updated whenever the Resources themselves are updated — resulting in conveying Viewlet versions in which they were last modified — are considered to carry the most extractable information, while making it easier for humans to understand the relationship, given the explicit versioning scheme.
 
   Alternatively, **checksums** — correlating content more directly — allow linking upstream state, yielding information limited to a true/false compatibility status when compared with new upstream content.
 
-  The **Themelet version** may be a fallback comparison target for Resource-level references that cannot be matched against individual Resources upstream, with limited usability (e.g. marking individual Resources as compatible when applying updates, until all Resource updates are propagated), as the declared upstream state is not available for comparison. Assigning ancestor versions to all Resources in this fashion is equivalent to a single, Themelet-level declaration.
+  The **Viewlet version** may be a fallback comparison target for Resource-level references that cannot be matched against individual Resources upstream, with limited usability (e.g. marking individual Resources as compatible when applying updates, until all Resource updates are propagated), as the declared upstream state is not available for comparison. Assigning ancestor versions to all Resources in this fashion is equivalent to a single, Viewlet-level declaration.
 
-  Finally, **Themelet Archiving** features may opportunistically provide usable information about the declared state, provided that the referenced version of the ancestor is present in archives (using older versions may produce false positives). While such data may be extensive, it may be impractical to provide or verify their exhaustiveness to produce additional information (e.g. version of last change).
+  Finally, **Viewlet Archiving** features may opportunistically provide usable information about the declared state, provided that the referenced version of the ancestor is present in archives (using older versions may produce false positives). While such data may be extensive, it may be impractical to provide or verify their exhaustiveness to produce additional information (e.g. version of last change).
 
   <br>
 
@@ -244,21 +244,21 @@ Changes that result in the modification of Theme resources are defined as _Stati
   -|-|-|-|-|-|-
   **Version** | direct | **Resource** (metadata) | Resource versions | - | ✅ Yes | ✅ Yes
   **Checksum** | local value to target derivative | **Resource** (content) | - | - | ✅ Yes | ❌ No
-  **Version** | direct | **Themelet** (metadata) | Themelet versions | - | ⚠️ Limited | ❌ No
-  **Version** | local archived upstream content to target | **Resource** (content) | Themelet versions | Themelet archive | ✅ Yes | ⚠️ Limited
+  **Version** | direct | **Viewlet** (metadata) | Viewlet versions | - | ⚠️ Limited | ❌ No
+  **Version** | local archived upstream content to target | **Resource** (content) | Viewlet versions | Viewlet archive | ✅ Yes | ⚠️ Limited
 
   <br>
 
   File modification time is considered unreliable as a declarative source due to volatility related to manual and automated Package- and Resource-level operations, but may be used as an auxiliary factor in authoring tools.
 
   Therefore, general recommendations for optimal developer experience include:
-  - declaring versions for Themelets (effectively fulfilled through Extension versions),
+  - declaring versions for Viewlets (effectively fulfilled through Extension versions),
   - declaring versions for Resources in distributed Extensions,
   - limiting compatibility declarations to the closest ancestor (parent) and its version, when possible.
 
   Tools dedicated to handling compatibility operations may use the resulting available data by:
   - identifying precise causes of mismatches (which may stem from i.a. creating, deleting, and modifying Resources upstream),
-  - integrating with Themelet Archiving features to provide context information,
+  - integrating with Viewlet Archiving features to provide context information,
   - offering and recommending solutions (i.a. propagating changes, correcting compatibility declarations, managing disinheritance),
   - improving present or future compatibility checks by surfacing declarations that are invalid, ineffective, redundant, suboptimal, or conflicting.
 
@@ -285,31 +285,31 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
   Common related tooling may be published for use by developers of the application and Extensions (e.g. as _GitHub Actions_).
 
-  As a side effect, this approach would result in missing version information for Extensions downloaded directly from the repository (including development copies, which may be used by downstream authors). However, the checksum fallback would likely embed satisfactory information in Themelets maintained using such upstream copies, and the authoring tools can offer to normalize such declarations by replacing them with version references once a production version of the ancestor is introduced to the application.
+  As a side effect, this approach would result in missing version information for Extensions downloaded directly from the repository (including development copies, which may be used by downstream authors). However, the checksum fallback would likely embed satisfactory information in Viewlets maintained using such upstream copies, and the authoring tools can offer to normalize such declarations by replacing them with version references once a production version of the ancestor is introduced to the application.
 
-- ### Themelet Versioning
+- ### Viewlet Versioning
   Resource inheritance and dependencies between Extensions will rely on references similar to those used by software package managers, allowing Extension developers and administrators to lock them down to specific versions for stability purposes. These references can link:
   
   - runtime implementations with Packages (e.g. the forum default Theme pointing to a Package directory in the filesystem — using values of the `package` and `version` columns in the `mybb_themes` table),
   - Packages with other Packages (e.g. a Theme Package referencing a parent Theme Package to inherit Resources from — using names and versions stored in JSON files).
   
-  To facilitate this behavior, supplied Themelets will be associated with versions of Extensions they were originally included in, and stored indefinitely in the filesystem. Notably, only a Themelet — with Resources that can be interpreted by the Theme System — will be preserved, rather than the complete Extension Package.
+  To facilitate this behavior, supplied Viewlets will be associated with versions of Extensions they were originally included in, and stored indefinitely in the filesystem. Notably, only a Viewlet — with Resources that can be interpreted by the Theme System — will be preserved, rather than the complete Extension Package.
   
-  The lifecycle of version-specific Themelets is loosely related to their usage status:
+  The lifecycle of version-specific Viewlets is loosely related to their usage status:
   
-  1. **latest** — the Themelet version is associated with the latest version of an Extension,
-  2. **active** — the Themelet version is outdated, but is configured as the main Themelet for an active Extension, or is inherited from by another active Extension,
-  3. **unused** — the Themelet version is outdated and is not referenced in any inheritance chain, but may continue to be used for comparison and auditing purposes.
+  1. **latest** — the Viewlet version is associated with the latest version of an Extension,
+  2. **active** — the Viewlet version is outdated, but is configured as the main Viewlet for an active Extension, or is inherited from by another active Extension,
+  3. **unused** — the Viewlet version is outdated and is not referenced in any inheritance chain, but may continue to be used for comparison and auditing purposes.
   
   This lifetime is not expected to be continuous, as arbitrary versions can be referenced throughout the application at any time (e.g. by Extensions or through configuration in the ACP).
   
-  Old Themelet versions can be removed manually from the filesystem, and additional tooling may be provided in the ACP for reviewing and purging unused versions.
+  Old Viewlet versions can be removed manually from the filesystem, and additional tooling may be provided in the ACP for reviewing and purging unused versions.
 
-- <details><summary><h3>Versioned Themelet Storage</h3></summary>
+- <details><summary><h3>Versioned Viewlet Storage</h3></summary>
 
-  Given that Themelets are subsets of Extension Package files, and all versions — including the most recent ones — are expected to have nearly equal status (as any version can be referenced throughout the application at any time), their storage structure would be similar to:
+  Given that Viewlets are subsets of Extension Package files, and all versions — including the most recent ones — are expected to have nearly equal status (as any version can be referenced throughout the application at any time), their storage structure would be similar to:
   
-  _Extensions directory_ (`inc/plugins/`, `inc/themes/`) ← _Package_ (e.g. `{codename}/`) ← _Package Themelets_ (e.g. `view/`) ← _Themelet_ (e.g. `{version}/`)
+  _Extensions directory_ (`inc/plugins/`, `inc/themes/`) ← _Package_ (e.g. `{codename}/`) ← _Package Viewlets_ (e.g. `view/`) ← _Viewlet_ (e.g. `{version}/`)
 
   Interactions with this structure affect, in order of importance:
   - **User Experience and Data Integrity**
@@ -359,21 +359,21 @@ Changes that result in the modification of Theme resources are defined as _Stati
   The following types of versioning methods were considered:
   
   - **Passive**, in which the directories are versioned before being used by the Extension System:
-    - **Manual** — the simplest approach that puts the burden of naming Themelet directories according to their version on Extension developers
+    - **Manual** — the simplest approach that puts the burden of naming Viewlet directories according to their version on Extension developers
     - **On Detection** — an improved approach that allows developers to add (and distribute) Packages with static directory names, which are automatically renamed according to the Extension's version
 
-  - **Active**, in which the target location with versioned Themelets is managed exclusively by the application, and Extension files are uploaded through the ACP or to a staging directory and processed by the application:
+  - **Active**, in which the target location with versioned Viewlets is managed exclusively by the application, and Extension files are uploaded through the ACP or to a staging directory and processed by the application:
     - **Processing (Simple)** — Extension files are uploaded to the ACP or a temporary location and processed to rename directories according to the Extension's version
-    - **Processing (Compatible)** — an improved approach that stores the latest Themelet version in a directory with a static name, allowing developers to access it for editing and exporting more easily
+    - **Processing (Compatible)** — an improved approach that stores the latest Viewlet version in a directory with a static name, allowing developers to access it for editing and exporting more easily
 
   - **Mixed**, in which administrators and developers can interact with the target location, but some intervention by the application is required:
-    - **On Archiving** — the most recent Themelet is kept in a directory with a static name, and is renamed to `{version}/` through user action before a new version is uploaded
+    - **On Archiving** — the most recent Viewlet is kept in a directory with a static name, and is renamed to `{version}/` through user action before a new version is uploaded
     - **Cold Duplicate** — Extension files are duplicated on detection to a `{version}/` directory; the static-named directory overrides content stored in `{version}/` directories as determined by the version specified in the manifest file; subsequent changes are propagated to the existing copy
     - **Hot Duplicate** — an improved approach, where Extension files from the static-named directory are synchronized to the `{version}/` copy, where data is accessed from; may be I/O-intensive, and would require user action to break synchronization before uploading new versions
   
   <br>
   
-  **Table: Themelet Versioning Methods**
+  **Table: Viewlet Versioning Methods**
   
   Type | Versioning Method | Runtime Source Directory | Overwrite Protection | Recognition of Deleted Files | Importing with Static Paths | Live Editing with Static Paths | Copy Synchronization | Exporting with Static Paths 
   --|--|:--:|:--:|:--:|:--:|:--:|:--:|:--:
@@ -400,28 +400,28 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
     <br>
   
-    **Diagram: Themelet Version Addressing Priority**
+    **Diagram: Viewlet Version Addressing Priority**
   
-    <img alt="themelet-version-addressing-priority" src="https://user-images.githubusercontent.com/8020837/155187159-125f6727-3651-44c0-9654-06c9430e95a1.png" width="50%">
+    <img alt="viewlet-version-addressing-priority" src="https://user-images.githubusercontent.com/8020837/155187159-125f6727-3651-44c0-9654-06c9430e95a1.png" width="50%">
   
     <br>
     <br>
 
-    Directories with old Themelets (`{version}/`) may be stored under a separate path for practical reasons (see: [Directory Structure](#directory-structure)).
+    Directories with old Viewlets (`{version}/`) may be stored under a separate path for practical reasons (see: [Directory Structure](#directory-structure)).
   
     Effectively, Resources supplied by a single Package may be stored in multiple locations:
     - source — directories that Extension developers are expected to interact with (existing in MyBB ≤ 1.8),
-    - Themelet archives — directories with copies of source files managed by the archiving system,
+    - Viewlet archives — directories with copies of source files managed by the archiving system,
     - web cache — directories with processed Resources saved for performance reasons, or available through HTTP (existing in MyBB ≤ 1.8).
   
-    The directory structure will allow users to add old Themelets versions manually.
+    The directory structure will allow users to add old Viewlets versions manually.
   
     ##### Copy Synchronization
     The _Cold Duplicate_ method relies on:
-    - creating a copy (archive) for each new version of a Themelet, and
+    - creating a copy (archive) for each new version of a Viewlet, and
     - synchronizing existing copies (archives) with the source when changes occur.
 
-    While Themelet operations (e.g. editing a Template) performed using the ACP involve the application's logic, which can reliably propagate them to version archives, the System is also expected to accept direct changes to source files of Packages. To support archiving in such scenarios, the implementation involves detecting changes that may have occurred, and addressing practical concerns related to copying files.
+    While Viewlet operations (e.g. editing a Template) performed using the ACP involve the application's logic, which can reliably propagate them to version archives, the System is also expected to accept direct changes to source files of Packages. To support archiving in such scenarios, the implementation involves detecting changes that may have occurred, and addressing practical concerns related to copying files.
   
     - ###### Change Detection
       Unable to subscribe and immediately react to filesystem events, the archiving system polls Extension source directories according to a strategy that balances supporting common workflows — compatible with best-practice guidance and recommendations — and optimal performance.
@@ -444,7 +444,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
           Usage of manifests and checksums in Extensions necessitate providing inbuilt tools for creating and maintaining them, which would be interacted with by the developers. Because both the metadata tools and the archiving rely on the same input (changes to Package files), the practice of synchronizing metadata at the end of development — in preparation for distribution — provides an accurate trigger for final archive synchronization.
         - **Development Environment**
 
-          While propagation of changes to used Themes — and, effectively, comparison support — is especially important for Themelets of certain origins due to their association with back-end code (_Core Themes_, _Plugins_), the risk of unaddressed breaking changes and security problems applies minimally to development installations, compared to production installations exposed on the network.
+          While propagation of changes to used Themes — and, effectively, comparison support — is especially important for Viewlets of certain origins due to their association with back-end code (_Core Themes_, _Plugins_), the risk of unaddressed breaking changes and security problems applies minimally to development installations, compared to production installations exposed on the network.
         - **First-party Authors**
 
           Authors of Packages being modified are more likely to recognize and understand changes between versions that may need to be propagated down the inheritance chain.
@@ -453,8 +453,8 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
       <br>
       
-      **Table: Archiving System's Themelet Package Classification**
-      Themelet Origin | Local Modifications | Expected Authors | Expected Environment | Expected User Experience | Resource File Polling
+      **Table: Archiving System's Viewlet Package Classification**
+      Viewlet Origin | Local Modifications | Expected Authors | Expected Environment | Expected User Experience | Resource File Polling
       -|-|-|-|-|-
       **Core Theme / Original Theme / Plugin** | **No (import only)** | Third-party | Development, Production | Low | No
       **Core Theme / Original Theme / Plugin** | **Yes** | First-party | Development | High | Yes
@@ -463,8 +463,8 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
       <br>
       
-      **Table: Themelet Characteristics by Origin**
-      Themelet Origin | Update Prevalence | Back-end Code Dependency | Propagation Importance | Expected Authors | Expected Authoring Environment
+      **Table: Viewlet Characteristics by Origin**
+      Viewlet Origin | Update Prevalence | Back-end Code Dependency | Propagation Importance | Expected Authors | Expected Authoring Environment
       -|-|-|-|-|-
       Core Theme | High | Yes | High | Application developers | Development
       Plugin | Medium | Yes | High | Extension developers | Development
@@ -488,13 +488,13 @@ Changes that result in the modification of Theme resources are defined as _Stati
       \* — depending on data used by the Theme System (or other application components)
 
     - ###### Metadata Mismatch
-      The first step in the Package archiving logic involves identifying its version — provided in a Package manifest (metadata) file — to target the correct internal archive, to which the Themelet — provided in other Package files — is to be copied.
+      The first step in the Package archiving logic involves identifying its version — provided in a Package manifest (metadata) file — to target the correct internal archive, to which the Viewlet — provided in other Package files — is to be copied.
       
       Because the application — and the archiving logic — may be triggered during the process of copying or uploading new Package source files, only a subset of them may be detected until the process has finished. As files belonging to different versions of a Package must be placed in the same source directory by webmasters — overwriting the previous version — files associated with distinct versions may be mixed, resulting in a potential mismatch between the manifest file and Resource files.
 
       While partially-uploaded Packages with latest manifest files could be archived successfully by updating the archives continuously with added or overwritten source files, a scenario involving new Resources and old metadata may result in incorrectly writing new data the old version's archive.
 
-      **Table: Basic Interpretation of Source Themelet Changes**
+      **Table: Basic Interpretation of Source Viewlet Changes**
 
       x | Old Resource(s) | New/Modified Resource(s)
       --|--|--
@@ -560,9 +560,9 @@ Changes that result in the modification of Theme resources are defined as _Stati
         hasRecentChanges -->|No| archive
     ```
 
-    See: [Examples — Themelet Source-Archive Synchronization](#themelet-sourcearchive-synchronization)
+    See: [Examples — Viewlet Source-Archive Synchronization](#viewlet-sourcearchive-synchronization)
     
-    Due to potentially large numbers of Themelet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
+    Due to potentially large numbers of Viewlet files to be handled, the archiving system may benefit from extending the existing Task System to handle resource-intensive tasks separately (e.g. through automatic triggers, reducing its impact on regular HTTP requests).
 
   - <details><summary><h4><i>Processing (Compatible)</i> method</h4></summary>
     
@@ -571,25 +571,25 @@ Changes that result in the modification of Theme resources are defined as _Stati
     - Advantages and rationale:
 
       1. Minimises redundant storage: the current version of the theme is not archived until a new version is uploaded via the ACP.
-      2. Ensures that the MyBB web app is immediately aware of all theme-related changes so that it can immediately perform such tasks as archiving themelets and rebuilding caches.
+      2. Ensures that the MyBB web app is immediately aware of all theme-related changes so that it can immediately perform such tasks as archiving viewlets and rebuilding caches.
       3. Avoids the need for regular filesystem checks/monitoring.
-      4. Avoids the possibility of archives being corrupted due to auto-archiving occurring in the middle of the uploading of a new version of a themelet, and thus avoids the need to handle this scenario via checksums and/or debouncing.
+      4. Avoids the possibility of archives being corrupted due to auto-archiving occurring in the middle of the uploading of a new version of a viewlet, and thus avoids the need to handle this scenario via checksums and/or debouncing.
       5. Provides a smooth path towards our goal of in-app upgrades/installations of plugins and ultimately of MyBB core itself.
 
     - Summary of the current implementation:
 
       - Themes and plugins are installed and upgraded by an admin uploading each one as a ZIP archive via the relevant ACP page (_Themes_ and _Plugins_ respectively).
       - MyBB then unzips the archive to a temporary directory, performs integrity checks, and, if the checks pass, moves it to the `staging/themes/` or `staging/plugins` directory respectively.
-      - If the theme/plugin is being upgraded (as opposed to being installed), then, next, MyBB archives the current version of its themelet - either `inc/themes/[codename]/current/` or `inc/plugins/[codename]/view/current/` - to the `storage/themelets/[ext.][codename]/[version]/` directory (the "ext." prefix is only applicable for plugin themelets).
-      - MyBB then "integrates" the staged theme/plugin by, firstly, moving the `devdist` version of its themelet to the relevant `current` directory (as above, and which on upgrade has just been archived), and then, secondly, for plugins, moving the remainder of its files to its live ("integration") directory, i.e., `inc/plugins/[codename]/`.
+      - If the theme/plugin is being upgraded (as opposed to being installed), then, next, MyBB archives the current version of its viewlet - either `inc/themes/[codename]/current/` or `inc/plugins/[codename]/view/current/` - to the `storage/viewlets/[ext.][codename]/[version]/` directory (the "ext." prefix is only applicable for plugin viewlets).
+      - MyBB then "integrates" the staged theme/plugin by, firstly, moving the `devdist` version of its viewlet to the relevant `current` directory (as above, and which on upgrade has just been archived), and then, secondly, for plugins, moving the remainder of its files to its live ("integration") directory, i.e., `inc/plugins/[codename]/`.
       - In the case of a theme, MyBB then auto-creates a (mutable) board theme from the uploaded original theme. In the case of a plugin, MyBB then installs and activates it.
 
     - Production and development modes:
 
-      - As indicated above, there are two possible subdirectories of a themelet, whether as part of a plugin or of a theme proper: `current` and `devdist`. The `current` subdirectory is intended for production use, and is immutable except for board themes. The `devdist` subdirectory is intended for use (1) during development of the theme/plugin, and (2) for eventual distribution with the theme/plugin. It is mutable.
-      - The mode can be toggled between production and development via a ubiquitous header of the ACP's _Templates & Style_ module, as well as via the corresponding ACP _General Configuration_ » _Development Mode (Themelets)_ setting. In production mode, MyBB uses the `current` directories for all theme-related functionality; conversely, in development mode, MyBB uses, where they exist, `devdist` directories for all theme-related functionality.
-      - In development mode, developers can, via the ACP's _Templates & Style_ module, edit the properties and resources of a given themelet. These changes are written to the themelet's `devdist` directory.
-      - When a developer is satisfied with the changes, a new version of the themelet can be exported via the ACP as an importable ZIP archive, based on the themelet's `devdist` directory (Note: exporting of plugins has not yet been implemented).
+      - As indicated above, there are two possible subdirectories of a viewlet, whether as part of a plugin or of a theme proper: `current` and `devdist`. The `current` subdirectory is intended for production use, and is immutable except for board themes. The `devdist` subdirectory is intended for use (1) during development of the theme/plugin, and (2) for eventual distribution with the theme/plugin. It is mutable.
+      - The mode can be toggled between production and development via a ubiquitous header of the ACP's _Templates & Style_ module, as well as via the corresponding ACP _General Configuration_ » _Development Mode (Viewlets)_ setting. In production mode, MyBB uses the `current` directories for all theme-related functionality; conversely, in development mode, MyBB uses, where they exist, `devdist` directories for all theme-related functionality.
+      - In development mode, developers can, via the ACP's _Templates & Style_ module, edit the properties and resources of a given viewlet. These changes are written to the viewlet's `devdist` directory.
+      - When a developer is satisfied with the changes, a new version of the viewlet can be exported via the ACP as an importable ZIP archive, based on the viewlet's `devdist` directory (Note: exporting of plugins has not yet been implemented).
       - The developer can choose, on exporting the theme/plugin, for MyBB to automatically archive its `current` version and then recursively copy the contents of the `devdist` subdirectory to the now-empty `current` directory (Note: this feature has not yet been implemented).
     </details>
   </details>
@@ -627,7 +627,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - undefined behavior (when a Plugin's Resources are accidentally overridden by another Plugin, given that Plugins don't have any hierarchy or explicit order).
   
   #### Separate Namespaces for Plugins
-  To address this problem, Resources supplied by Plugin Themelets are placed in — and accessed from — their own namespace, which would result in distinct and unique paths managed by the Extension System.
+  To address this problem, Resources supplied by Plugin Viewlets are placed in — and accessed from — their own namespace, which would result in distinct and unique paths managed by the Extension System.
   
   In that case, no accidental Theme–Plugin or Plugin–Plugin Resource path collisions would occur:
   
@@ -651,7 +651,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   #### Source Priority in Extension Namespaces
   In addition to preventing accidental collisions, namespaces allow for better control of intentional overrides (compared to combining all Resources in a single namespace in undefined order).
   
-  While Themes are expected to override Plugin Themelets (by assigning higher priority to Themes' contributions), namespaces allow for better control of external Plugins' contributions, such as:
+  While Themes are expected to override Plugin Viewlets (by assigning higher priority to Themes' contributions), namespaces allow for better control of external Plugins' contributions, such as:
   - disallowing Plugin–Plugin contributions completely (by not recognizing external Plugins' sources),
   - only allowing non-conflicting contributions (i.e. only new Resources) to another Plugin's namespace (by assigning higher priority to the target Plugin's original sources), or
   - allowing any contributions, including the overriding of original Resources, while ensuring that external overrides work correctly (by assigning higher priority to external Plugins' contributions).
@@ -683,7 +683,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
   <br>
 
-  **Table: Themelet Namespace Interactions by Extension Type**
+  **Table: Viewlet Namespace Interactions by Extension Type**
   
   Extension Type | Source in Generic Namespaces | Source in Own Extension Namespace | Source in Any Extension Namespace
   :--:|:--:|:--:|:--:
@@ -787,14 +787,14 @@ Changes that result in the modification of Theme resources are defined as _Stati
   <br>
 
 - ### Resource Groups
-  Themelet Resource type directories (e.g. `templates/`, `styles/`) may contain subdirectories separating Resources into groups (shown in an expandable/collapsible hierarchy in the ACP), which may be nested.
+  Viewlet Resource type directories (e.g. `templates/`, `styles/`) may contain subdirectories separating Resources into groups (shown in an expandable/collapsible hierarchy in the ACP), which may be nested.
 
   The system may support translatable titles and descriptions for Resources and groups, provided in the JSON data files.
 
 - ### Asset Management
   The application will provide centralized management of Assets, handling conversion (e.g. from SCSS to CSS), processing (e.g. minimization) and publishing to web-accessible directories.
   
-  In addition to appending Assets declared in Themelets' Resource Properties, an API will provide:
+  In addition to appending Assets declared in Viewlets' Resource Properties, an API will provide:
   - helper functions, e.g. generating Asset URLs,
   - code generation functions (`<script>`, `<link>`, `<image>` etc.),
   - Asset appending functions, delegating the choice of codes, locations, and techniques to the application.
@@ -834,22 +834,22 @@ Changes that result in the modification of Theme resources are defined as _Stati
   ```mermaid
   flowchart BT
 
-      subgraph Themelet
-          HierarchicalThemelet{{Hierarchical Themelet}}:::abstract
-          HierarchicalThemelet:::themelet
+      subgraph Viewlet
+          HierarchicalViewlet{{Hierarchical Viewlet}}:::abstract
+          HierarchicalViewlet:::viewlet
 
           PublicationDirectives[/Publication Directives/]:::metadata
-          PublicationDirectives---HierarchicalThemelet
+          PublicationDirectives---HierarchicalViewlet
           
           Resources[Resources]:::resource
-          Resources---HierarchicalThemelet
+          Resources---HierarchicalViewlet
 
           PublishableResources[Publishable Resources]:::abstract
           PublishableResources:::resource
           PublishableResources-->Resources
 
           AttachDirectives[/Asset Attaching Directives/]:::metadata
-          AttachDirectives---HierarchicalThemelet
+          AttachDirectives---HierarchicalViewlet
       end
 
       subgraph Asset Management
@@ -871,15 +871,15 @@ Changes that result in the modification of Theme resources are defined as _Stati
               ProcessedResources-->ConvertedResources
               ProcessedResources-->ImplicitSources
 
-              ThemeletAssets[Published Themelet Assets]:::themeletAsset
-              ThemeletAssets-->ProcessedResources
+              ViewletAssets[Published Viewlet Assets]:::viewletAsset
+              ViewletAssets-->ProcessedResources
           end
 
           AssetPublishing-.->PublicationDirectives
 
           PublishedAssets[Published Assets]:::abstract
           PublishedAssets:::asset
-          PublishedAssets-->ThemeletAssets
+          PublishedAssets-->ViewletAssets
           PublishedAssets-->UnmanagedAssets
           AttachDirectives-.->PublishedAssets
 
@@ -911,8 +911,8 @@ Changes that result in the modification of Theme resources are defined as _Stati
       classDef convertedResource fill:indigo
       classDef processedResource fill:royalblue,color:white
       classDef subroutine fill:black,font-family:monospace
-      classDef themelet stroke:hotpink,color:hotpink
-      classDef themeletAsset fill:teal,color:white
+      classDef viewlet stroke:hotpink,color:hotpink
+      classDef viewletAsset fill:teal,color:white
   ```
 
   <br>
@@ -934,7 +934,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
 
   Declaration Type | ℹ Static | ℹ Dynamic | ℹ Content | 🚥 Output | 🚥 Path | 🚥 Placement |
   --:|:--:|:--:|:--:|:--:|:--:|:--:|
-  **Themelet Manifest** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+  **Viewlet Manifest** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
   **`asset()`** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
   **`asset()` rendered locally** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
   **Hardcoded with `asset_url()`** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No |
@@ -1061,7 +1061,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - manually, through ACP's _File Verification_,
   - automatically, during periodic verification of the application's own health,
   - after Extension upload to identify file corruption,
-  - before copying Themelets to archive storage, to ensure the correctness of the archives.
+  - before copying Viewlets to archive storage, to ensure the correctness of the archives.
 
   The application may provide Package authoring tools to update checksums automatically after intentional modification.
 
@@ -1358,10 +1358,10 @@ Changes that result in the modification of Theme resources are defined as _Stati
   The following storage choices were considered for each logical group in the hierarchy of Resources:
   
   1. Supplying Extension Type
-     - A. Themelets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
+     - A. Viewlets stored in the Extension Directories (i.e. split between `inc/themes/` and `inc/plugins/`, according to type)
 
        **✔ preferred** — helping encapsulate Extension files in a single directory
-     - B. Themelets stored in the same directory (e.g. `inc/themes/`, splitting the Extension's Themelet from other files)
+     - B. Viewlets stored in the same directory (e.g. `inc/themes/`, splitting the Extension's Viewlet from other files)
   1. Extension's Target Interface Type/Namespace
      - A. Extension Directories spread across the filesystem according to type (e.g. `inc/themes/`, `admin/themes/`)
      - B. Extension Directories stored in subdirectories according to type (e.g. `inc/themes/frontend/`, `inc/themes/admin/`)
@@ -1370,42 +1370,42 @@ Changes that result in the modification of Theme resources are defined as _Stati
        **✔ preferred** — the same directory used for a single theme system handling both front-end and the ACP, and allowing Themes to target multiple types
   1. Extension Package
      - A. Extensions stored in directories referencing the Package Name (`<package-name>/`)
-  1. Themelet Path
-     - A. Themelets of all Extensions stored in standardized subdirectories (e.g. `view/`) of Extension Directories
-     - B. Themelets of Plugins stored in standardized subdirectories (e.g. `view/`) of Extension Directories, and Themelets of Themes directly in Extension Directories
+  1. Viewlet Path
+     - A. Viewlets of all Extensions stored in standardized subdirectories (e.g. `view/`) of Extension Directories
+     - B. Viewlets of Plugins stored in standardized subdirectories (e.g. `view/`) of Extension Directories, and Viewlets of Themes directly in Extension Directories
 
        **✔ preferred** — avoiding confusion with unrelated directories; simplifying directory structure for Themes
-     - C. Themelets of all Extensions stored directly in Extension Directories
-  1. Themelet Version
-     - Latest Themelet Version
-       - A. latest Themelets stored in subdirectories of Extension Themelet Paths (e.g. `current/`)
-       - B. latest Themelets stored directly in Extension Themelet Paths
+     - C. Viewlets of all Extensions stored directly in Extension Directories
+  1. Viewlet Version
+     - Latest Viewlet Version
+       - A. latest Viewlets stored in subdirectories of Extension Viewlet Paths (e.g. `current/`)
+       - B. latest Viewlets stored directly in Extension Viewlet Paths
 
          **✔ preferred** — simplifying structure of directories exposed to developers and webmasters
-     - Old Themelet Versions
-       - A. old Themelets stored in an external structure (e.g. `cache/themelets/<package-name>/{version}/`)
+     - Old Viewlet Versions
+       - A. old Viewlets stored in an external structure (e.g. `cache/viewlets/<package-name>/{version}/`)
 
          **✔ preferred** — removing necessity of loosening permissions of Extension directories
-       - B. old Themelets stored in subdirectories of Extension Themelet Paths (e.g. `{version}/`)
+       - B. old Viewlets stored in subdirectories of Extension Viewlet Paths (e.g. `{version}/`)
   1. Target Namespace
      - Themes
-       - A. all Themelets stored in directories named according to target namespace (`{namespace}/`) 
+       - A. all Viewlets stored in directories named according to target namespace (`{namespace}/`) 
 
          **✔ required** — all Resources expected to belong to a namespace
      - Plugins
 
        - Own Namespace
-         - A. directory with the Themelet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
+         - A. directory with the Viewlet targeting the Plugin's own namespace stored in subdirectory (equivalent to Themes)
 
            _own namespace directory on the same level as other targeted namespaces; structure similar to Themes; hinting to developers that Resources will be placed in a namespace_
-         - B. Themelet targeting the Plugin's own namespace stored directly in the Themelet directory
+         - B. Viewlet targeting the Plugin's own namespace stored directly in the Viewlet directory
 
            **✔ preferred** — only own namespaces allowed; simple layout
        - ~~Other Namespaces~~
-         - A. directories with Themelets targeting other Plugins' namespaces stored directly in the Themelet directory (e.g. `{namespace}/`)
+         - A. directories with Viewlets targeting other Plugins' namespaces stored directly in the Viewlet directory (e.g. `{namespace}/`)
 
            **✔ preferred** — directory on the same level as own namespace directory
-         - B. directories with Themelets targeting other Plugins' namespaces stored in a standardized subdirectory (e.g. `extensions/{namespace}/`)
+         - B. directories with Viewlets targeting other Plugins' namespaces stored in a standardized subdirectory (e.g. `extensions/{namespace}/`)
   1. Namespace Directory Name Prefix
      - A. `{namespace}/` (no prefix)
 
@@ -1436,7 +1436,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
     Resources supplied by a Plugin, intended for its own namespace, can be placed in an `ext/` directory, which will be assigned to the Plugin-specific namespace `ext.{codename}` automatically.
   - **Resource Directories**
 
-    Directories grouping Themelet Resources by type are named according to their purpose, rather than specific language or technology.
+    Directories grouping Viewlet Resources by type are named according to their purpose, rather than specific language or technology.
     E.g. CSS files are placed in `styles/`, instead of `css/` or `stylesheets/`, as the directory may also contain SCSS files.
 
   - **Hierarchical References**
@@ -1520,7 +1520,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   }
   ```
 
-- <details><summary><h4>Themelet Source–Archive Synchronization</h4></summary>
+- <details><summary><h4>Viewlet Source–Archive Synchronization</h4></summary>
 
   ```php
   function checkExtensionArchive(\MyBB\Extension $extension): void
@@ -1583,7 +1583,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   `class Resource`
   ```php
   /**
-   * Returns the Themelet version in which the Resource was last modified.
+   * Returns the Viewlet version in which the Resource was last modified.
    */
   function getVersion(Resource $resource): ?string
   {
@@ -1594,31 +1594,31 @@ Changes that result in the modification of Theme resources are defined as _Stati
    * Yields Problems relating to compatibility with Resource's ancestors.
    *
    * @return iterable<Problem>
-   * @note Ignores issues not related to the Resource and its Themelet.
+   * @note Ignores issues not related to the Resource and its Viewlet.
    */
   function compatibilityProblems(): iterable
   {
       if ($this->inherited()) {
-          if ($this->existsInThemelet()) {
+          if ($this->existsInViewlet()) {
               if (!$this->contentDiffersFromClosestAncestor()) {
                   yield NormalizationProblem::REDUNDANT_OVERRIDE;
               }
   
-              // compare Resource compatibility declarations to ancestry established in the Themelet
+              // compare Resource compatibility declarations to ancestry established in the Viewlet
               if (array_diff($this->getAncestryDeclarations(), $this->getAncestry()) {
-                  yield NormalizationProblem::DECLARATION_OF_ANCESTORS_UNKNOWN_TO_THEMELET;
+                  yield NormalizationProblem::DECLARATION_OF_ANCESTORS_UNKNOWN_TO_VIEWLET;
               }
   
               $intermediateAncestors = []; // ordered from closest
               $compatibleAncestors = [];
   
               foreach ($this->getAncestry() as $ancestor => $declaration) { // ordered from closest
-                  $themeletDeclaration = $this->getThemelet()->getAncestryDeclarations()[$ancestor->getThemelet()];
+                  $viewletDeclaration = $this->getViewlet()->getAncestryDeclarations()[$ancestor->getViewlet()];
   
                   if (
                       $ancestor->getVersion() !== null &&
-                      $themeletDeclaration['version'] !== null &&
-                      version_compare($ancestor->getVersion(), $themeletDeclaration['version'], '>')
+                      $viewletDeclaration['version'] !== null &&
+                      version_compare($ancestor->getVersion(), $viewletDeclaration['version'], '>')
                   ) {
                       /*
                        * Using incorrectly-defined, future version of ancestor
@@ -1670,18 +1670,18 @@ Changes that result in the modification of Theme resources are defined as _Stati
                       $indirectCompatibilityLevel < Level::RESOURCE
                   ) {
                       /*
-                       * Future changes may be unnecessarily surfaced for review without Themelet Archives
+                       * Future changes may be unnecessarily surfaced for review without Viewlet Archives
                        */
                       yield FutureProblem::NO_RESOURCE_LEVEL_VERSION_DECLARATION;
   
                       if (
-                          $directCompatibilityLevel < Level::THEMELET &&
-                          $indirectCompatibilityLevel < Level::THEMELET
+                          $directCompatibilityLevel < Level::VIEWLET &&
+                          $indirectCompatibilityLevel < Level::VIEWLET
                       ) {
                           /*
-                           * Changes may be unnecessarily surfaced for review without Themelet Archives
+                           * Changes may be unnecessarily surfaced for review without Viewlet Archives
                            */
-                          yield FutureProblem::NO_THEMELET_LEVEL_VERSION_DECLARATION;
+                          yield FutureProblem::NO_VIEWLET_LEVEL_VERSION_DECLARATION;
                       }
                   }
   
@@ -1749,7 +1749,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
    */
   function declaredCompatibleWithAncestor(Resource $ancestor): ?array
   {
-      if ($this->inherited() && $this->existsInThemelet()) {
+      if ($this->inherited() && $this->existsInViewlet()) {
           $declaration = $this->getAncestry($ancestor);
   
           $tests = [
@@ -1762,11 +1762,11 @@ Changes that result in the modification of Theme resources are defined as _Stati
                   'callback' => $this->declaredCompatibleWithAncestorByChecksum(...),
               ],
   
-              // Themelet-level version compatibility declaration
-              // (Themelet-level discrepancies not related to the Resource handled at higher scope)
+              // Viewlet-level version compatibility declaration
+              // (Viewlet-level discrepancies not related to the Resource handled at higher scope)
               [
-                  'level' => Level::THEMELET,
-                  'callback' => $this->themeletDeclaredCompatibleWithAncestor(...),
+                  'level' => Level::VIEWLET,
+                  'callback' => $this->viewletDeclaredCompatibleWithAncestor(...),
               ],
   
               // opportunistic observations of upstream changes
@@ -1807,7 +1807,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   {
       $declaration = $this->getAncestry($ancestor);
   
-      if ($declaration['checksum'] !== null && $ancestor->existsInThemelet()) {
+      if ($declaration['checksum'] !== null && $ancestor->existsInViewlet()) {
           return $ancestor->getContentChecksum() === $declaration['checksum'];
       }
   
@@ -1827,8 +1827,8 @@ Changes that result in the modification of Theme resources are defined as _Stati
   
   function contentEqualToVersion(string $version): ?bool
   {
-      if (ThemeletArchive::has($this->getThemelet(), $version)) {
-          $versionResource = ThemeletArchive::get($this->getThemelet(), $version)
+      if (ViewletArchive::has($this->getViewlet(), $version)) {
+          $versionResource = ViewletArchive::get($this->getViewlet(), $version)
               ?->getResource($this->getLocator());
   
           return (
@@ -1860,7 +1860,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   </details>
 
 - #### Theme System Directory Tree
-  The following is an example of a partial directory tree related to the Theme System, featuring the internal Themelet cache and source files of:
+  The following is an example of a partial directory tree related to the Theme System, featuring the internal Viewlet cache and source files of:
 
   - Core Theme `core.default`, contributing to namespaces `frontend` and `parser`
   - Core Theme `core.acp`, contributing to namespace `acp`
@@ -1870,7 +1870,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   ```
   .
   ├── data/
-  │   └── themelets/
+  │   └── viewlets/
   │       ├── core.default/
   │       │   ├── 1.9.0/
   │       │   └── 1.9.1/
@@ -1937,7 +1937,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
    - SCSS support
    - basic inheritance functionality
    - basic Theme Management functionality
-   - Plugin Themelets
+   - Plugin Viewlets
    - basic Theme Resource modification functions for Extensions
    - ACP Template & stylesheet editing
 1. Theme System Improvements
@@ -1945,7 +1945,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
    - ACP UI for customizing values of CSS/SCSS variables
 1. Advanced Theme System Features
    - Dynamic View Macros
-   - Themelet archiving system
+   - Viewlet archiving system
    - Storing history of manual and automated changes to Resources
 1. Extension System Improvements
    - `manifest.json` for Plugins
@@ -2002,31 +2002,31 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - **[View] Resource Property** — data associated with a Resource
 
 - **Absolute Resource Path**, `<absolute-resource-path>` — a filesystem path to a Resource file
-- **Themelet [Context] Locator**, `<themelet-locator>` — a path to a Resource, referencing the Type, Group, Filename and, optionally, the Namespace; the default Namespace is provided implicitly by the usage context
+- **Viewlet [Context] Locator**, `<viewlet-locator>` — a path to a Resource, referencing the Type, Group, Filename and, optionally, the Namespace; the default Namespace is provided implicitly by the usage context
 - **Resource [Context] Locator**, `<resource-context-locator>` — a path to a Resource, referencing the Group, Filename and, optionally, the Namespace; the Type, and default Namespace, is provided implicitly by the usage context
 
 *theme system*
 
-- **Themelet** — a collection of View Resources with their Properties
+- **Viewlet** — a collection of View Resources with their Properties
 - **Resource Properties File** — a `resources.json` file in JSON format containing Resource Properties (see `<resource-properties-file-path>`)
 - **Asset Properties File** — an `assets.json` file in JSON format containing Asset Properties (see `<asset-properties-file-path>`)
-- **Themelet Directory** — a directory containing Themelet files (see `<themelet-directory-path>`)
-- **Themelet Inheritance Chain** — an ordered list of Extensions, according to which a final Themelet is resolved, where priority is defined by the number of steps away from the end of the chain
-- **Themelet Inheritance Base** — Themelet of the Core Theme and Plugin Themelets of active Plugins
-- **Resolved Themelet** — Themelet collected or composed according to a defined Themelet Inheritance Chain
-- **Compiled Themelet** — Resolved Themelet prepared for output or final interpretation (e.g. Twig templates converted to PHP code) and web-accessible static files
+- **Viewlet Directory** — a directory containing Viewlet files (see `<viewlet-directory-path>`)
+- **Viewlet Inheritance Chain** — an ordered list of Extensions, according to which a final Viewlet is resolved, where priority is defined by the number of steps away from the end of the chain
+- **Viewlet Inheritance Base** — Viewlet of the Core Theme and Plugin Viewlets of active Plugins
+- **Resolved Viewlet** — Viewlet collected or composed according to a defined Viewlet Inheritance Chain
+- **Compiled Viewlet** — Resolved Viewlet prepared for output or final interpretation (e.g. Twig templates converted to PHP code) and web-accessible static files
 
 *plugin interface*
 
 - **Plugin View** — interface-related data supplied by a Plugin
-  - **Plugin Themelet** — a Themelet supplied by a Plugin
+  - **Plugin Viewlet** — a Viewlet supplied by a Plugin
 - **Plugin View Directory** — a directory containing Plugin View files (see `<plugin-view-directory-path>`)
 
 *macros*
 
-- **[View] Macro** — a set of changes to a Themelet that can be stored, applied, and reversed
-  - **Static [View] Macro** — an View Macro that operates on a Themelet and causes it to be stored in modified state
-  - **Dynamic [View] Macro** — an View Macro that operates on a Resolved Themelet and causes a Compiled Themelet to be stored in modified state
+- **[View] Macro** — a set of changes to a Viewlet that can be stored, applied, and reversed
+  - **Static [View] Macro** — an View Macro that operates on a Viewlet and causes it to be stored in modified state
+  - **Dynamic [View] Macro** — an View Macro that operates on a Resolved Viewlet and causes a Compiled Viewlet to be stored in modified state
 - **[View] Macro Directory** — a directory containing Macro Files (see `<extension-macro-directory-path>`)
 - **[View] Macro File** — a file defining a View Macro, located in the Macro Directory (see `<extension-macro-file-path>`)
 
@@ -2035,7 +2035,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
 ### [ABNF](https://datatracker.ietf.org/doc/html/rfc5234)
 ```abnf
 ; Theme System runtime references
-themelet-locator = ["@" resource-namespace "/"] resource-path-in-namespace
+viewlet-locator = ["@" resource-namespace "/"] resource-path-in-namespace
 resource-context-locator = ["@" resource-namespace "/"] resource-path
 
 ; View Resources
@@ -2054,20 +2054,20 @@ resource-path             = [resource-group "/"] resource-filename
 resource-group            = 1*( a-z / "_" )
 resource-filename         = 1*VCHAR "." 1*VCHAR ; name.extension
 
-resource-path-in-themelet = resource-namespace-directory "/" resource-path-in-namespace
-absolute-resource-path    = <web-root-directory> "/" themelet-directory-path "/" resource-path-in-themelet
+resource-path-in-viewlet  = resource-namespace-directory "/" resource-path-in-namespace
+absolute-resource-path    = <web-root-directory> "/" viewlet-directory-path "/" resource-path-in-viewlet
 
-resource-properties-file-path = themelet-directory-path "/" resource-namespace-directory "/resources.json"
-asset-properties-file-path = themelet-directory-path "/" resource-namespace-directory "/assets.json"
+resource-properties-file-path = viewlet-directory-path "/" resource-namespace-directory "/resources.json"
+asset-properties-file-path = viewlet-directory-path "/" resource-namespace-directory "/assets.json"
 
-; Themelets
-themelet-directory-path   = themelet-source-path
-                          / themelet-archive-path
+; Viewlets
+viewlet-directory-path    = viewlet-source-path
+                          / viewlet-archive-path
 
-themelet-source-path      = theme-view-directory-path  ; supplied a Theme
+viewlet-source-path       = theme-view-directory-path  ; supplied a Theme
                           / plugin-view-directory-path ; supplied by a Plugin
 
-themelet-archive-path     = "data/themelets/" package-name "/" package-version
+viewlet-archive-path      = "data/viewlets/" package-name "/" package-version
 
 ; Extensions
 plugins-directory-path    = "inc/plugins"
@@ -2101,7 +2101,7 @@ macro-name                     = 1*( DIGIT / a-z / "_" )
 extension-macro-directory-path = extension-directory-path "/view-macros"
 extension-macro-file-path      = extension-macro-directory-path "/" resource-namespace ["/" macro-name] ".json"
 
-themelet-active-macro-file-path = themelet-directory-path "/" resource-namespace-directory "/.macros/" macro-name ".json"
+viewlet-active-macro-file-path = viewlet-directory-path "/" resource-namespace-directory "/.macros/" macro-name ".json"
 ```
 
 ## References
