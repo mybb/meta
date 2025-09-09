@@ -70,7 +70,7 @@ The Extension System will internally use an additional type for third-party Them
 The remaining Themes — *Board Themes* — will function as the customization layer, and will be editable by Plugins and ACP tools.
 
 #### Theme Packages
-Theme files will be placed in `inc/themes/<package-name>/` directories referencing codenames or local identifiers, and implement the Viewlet structure, additionally including a `properties.json` file with additional configuration and presets, and `manifest.json` with author information and metadata.
+Theme files will be placed in `inc/themes/<package-name>/` directories referencing codenames or local identifiers, and implement the Viewlet structure, additionally including a `properties.json` file with additional configuration and presets, and `extension.json` with author information and metadata.
 
 #### Theme Activation
 Administrators will be able to activate Themes by selecting one of the Packages in the filesystem. Activated Themes will store values for supported configuration options defined in Packages (like color scheme choices).
@@ -85,7 +85,7 @@ Plugins will use the universal Viewlet structure under `view/` to supply own Res
 
 Custom Resources will be added at the beginning of the inheritance chain, meaning that Themes will be able to override them to adjust Plugins visually.
 
-Similar to Themes, the system will use `manifest.json` files for metadata.
+Similar to Themes, the system will use `extension.json` files for metadata.
 
 #### View Macros
 The Extension System will expose a Theme modification API, and accept modification instructions known as *Macros*. These instructions will be handled by the System to apply, revert, and track theme changes requested by individual plugins.
@@ -1029,7 +1029,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
     - https://github.com/mybb/mybb/issues/4328#issuecomment-813399129
 
 - ### JSON Data Files
-  - #### `manifest.json`
+  - #### `extension.json`
     Defines metadata associated with an Extension. Expected to be compatible with the [composer.json schema](https://getcomposer.org/doc/04-schema.md#json-schema).
 
     Contains:
@@ -1909,7 +1909,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
           │   │   ├── styles/
           │   │   ├── templates/
           │   │   └── resources.json
-          │   ├── manifest.json
+          │   ├── extension.json
           │   └── properties.json
           ├── core.acp/
           │   ├── acp/
@@ -1918,7 +1918,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
           │   │   ├── styles/
           │   │   ├── templates/
           │   │   └── resources.json
-          │   └── manifest.json
+          │   └── extension.json
           └── theme_a/
               ├── frontend/
               │   ├── styles/
@@ -1926,7 +1926,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
               ├── ext.plugin_b/
               │   ├── styles/
               │   └── resources.json
-              └── manifest.json
+              └── extension.json
   ```
 
 ## General Roadmap
@@ -1948,7 +1948,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
    - Viewlet archiving system
    - Storing history of manual and automated changes to Resources
 1. Extension System Improvements
-   - `manifest.json` for Plugins
+   - `extension.json` for Plugins
    - Ability to install Extensions using Composer
 
 ## Definitions
@@ -1973,7 +1973,7 @@ Changes that result in the modification of Theme resources are defined as _Stati
   - **[Extension] Codename**, `<extension-codename>` — a unique identifier associated with an extension, limited to a-z letters and underscore `_`, registered on the Extend platform
   - **Extension Directory** — a directory containing files from an Extension Package, located directly under `inc/plugins/` or `inc/themes/` (see `<extension-directory-path>`)
   - **Extension Metadata** — information about the extension, such as the author and license, used in Extension Management
-  - **Extension Manifest File** — a `manifest.json` file in JSON format, compatible with [Composer schema](https://getcomposer.org/doc/04-schema.md), containing Extension Metadata, located directly in an Extension Directory (see `<extension-manifest-file-path>`)
+  - **Extension Manifest File** — a `extension.json` file in JSON format, compatible with [Composer schema](https://getcomposer.org/doc/04-schema.md), containing Extension Metadata, located directly in an Extension Directory (see `<extension-manifest-file-path>`)
   - **Extension Property** — data associated with an Extension (e.g. color presets of a Theme)
   - **Extension Properties File** — a `properties.json` file in JSON format containing Extension Properties, located directly in an Extension Directory (see `<extension-properties-file-path>`)
   - **Extension Checksums** — checksums of files included in an Extension Package, not including the Checksums File itself
@@ -2082,7 +2082,7 @@ theme-directory-path      = themes-directory-path "/" theme-package-name
 plugin-view-directory-path = plugin-directory-path "/view"
 theme-view-directory-path  = theme-directory-path
 
-extension-manifest-file-path   = extension-directory-path "/manifest.json"
+extension-manifest-file-path   = extension-directory-path "/extension.json"
 extension-properties-file-path = extension-directory-path "/properties.json"
 extension-checksums-file-path  = extension-directory-path "/checksums"
 
